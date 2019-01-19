@@ -37,7 +37,8 @@ void opcontrol() {
 	Task collectorTask(Robot::operate_BallCollector);
 
 	// Task aimTask(Robot::autoAim_Task);
-	// Task alignTask(Robot::alignTheBot);
+	Task assistShooting(Robot::assistShooting);
+	Task alignTask(Robot::alignTheBot);
 
 	pros::delay(500);
 
@@ -68,19 +69,20 @@ void opcontrol() {
 
 		// leftDrive.moveVelocity((int) (200.0 * master.getAnalog(okapi::ControllerAnalog::leftY)));
 		// rightDrive.moveVelocity((int) (200.0 * master.getAnalog(okapi::ControllerAnalog::rightY)));
-
-		if(master.getDigital(okapi::ControllerDigital::R1)) {
-			RobotStates::is_Shooting_Ball = false;
-			RobotStates::is_Collecting_Ball = true;
-			// Robot::collector->collectBalls();
-		} else if (master.getDigital(okapi::ControllerDigital::R2)) {
-			// Robot::collector->shootBall();
-			RobotStates::is_Collecting_Ball = false;
-			RobotStates::is_Shooting_Ball = true;
-		} else {
-			// Robot::collector->stopCollector();
-			RobotStates::is_Collecting_Ball = false;
-			RobotStates::is_Shooting_Ball = false;
+		if(!RobotStates::is_assistant_Shooting) {
+			if(master.getDigital(okapi::ControllerDigital::R1)) {
+				RobotStates::is_Shooting_Ball = false;
+				RobotStates::is_Collecting_Ball = true;
+				// Robot::collector->collectBalls();
+			} else if (master.getDigital(okapi::ControllerDigital::R2)) {
+				// Robot::collector->shootBall();
+				RobotStates::is_Collecting_Ball = false;
+				RobotStates::is_Shooting_Ball = true;
+			} else {
+				// Robot::collector->stopCollector();
+				RobotStates::is_Collecting_Ball = false;
+				RobotStates::is_Shooting_Ball = false;
+			}
 		}
 
 		if(master.getDigital(okapi::ControllerDigital::L1)) {
@@ -91,7 +93,7 @@ void opcontrol() {
 			Robot::collector->capStop();
 		}
 
-		if(!RobotStates::is_autoAiming) {
+		if(!RobotStates::is_assistant_Shooting) {
 			if(master.getDigital(okapi::ControllerDigital::up)) {
 				Robot::nuc->hoodUp();
 			} else if (master.getDigital(okapi::ControllerDigital::down)) {
@@ -106,9 +108,7 @@ void opcontrol() {
 		}
 
 		if(master.getDigital(okapi::ControllerDigital::A)) {
-			RobotStates::is_autoAligning = true;
-			RobotStates::is_Aligned = false;
-			delay(200);
+			Robot::getInstance()->toggle_AssistShooting();
 			// Robot::cam->selectTarget();
 			// Robot::nuc->toggleAutoAim();
 		}

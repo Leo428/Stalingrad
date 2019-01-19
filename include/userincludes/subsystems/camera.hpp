@@ -9,7 +9,8 @@ class Camera : public ControllerInput<double> {
         Camera();
 
         double controllerGet() override;
-        static Vision * scope;
+        static Vision * buttomCam;
+        // static Vision * topCam;
         
         void updateSensor();
         void selectTarget();

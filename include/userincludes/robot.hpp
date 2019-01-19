@@ -28,7 +28,17 @@ class Robot {
         static okapi::Motor * rightFront_Motor;
         static okapi::Motor * rightBack_Motor;
 
+        // static okapi::AsyncMotionProfileController _turnController;
+        // static okapi::AsyncMotionProfileController _profileController;
+        // static okapi::AsyncPosIntegratedController _hoodController;
+
+        static okapi::AsyncMotionProfileController * turnController;
+        static okapi::AsyncMotionProfileController * profileController;
+        static okapi::AsyncPosIntegratedController * hoodController;
+
         void rest_before_driver();
+        void toggle_AssistShooting(); 
+        static double in2meter(double in);
         
     private:
         static Robot* instance;

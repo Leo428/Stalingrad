@@ -15,6 +15,7 @@ void initialize() {
     Robot * robot = Robot::getInstance();
     printf("initializing! \n");
     pros::Task refresh(bigTV->updateScreen);
+    Robot::profileController->generatePath({Point{0_ft, 0_ft, 0_deg}, Point{2.75_ft, 0_ft, 0_deg}}, "A");
 }
 
 /**
@@ -33,4 +34,6 @@ void disabled() {}
  * This task will exit when the robot is enabled and autonomous or opcontrol
  * starts.
  */
-void competition_initialize() {}
+void competition_initialize() {
+    
+}

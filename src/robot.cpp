@@ -1,6 +1,6 @@
 #include "userincludes/robot.hpp"
 
-okapi::ChassisControllerIntegrated* Robot::base = 0;
+// okapi::ChassisControllerIntegrated* Robot::base = 0;
 Collector* Robot::collector = 0;
 NucLauncher* Robot::nuc = 0;
 Camera* Robot::cam = 0; 
@@ -10,20 +10,45 @@ okapi::Motor * Robot::leftBack_Motor = new okapi::Motor(RobotStates::BASE_LEFT_B
 okapi::Motor * Robot::rightFront_Motor = new okapi::Motor(RobotStates::BASE_RIGHT_FRONT);
 okapi::Motor * Robot::rightBack_Motor = new okapi::Motor(RobotStates::BASE_RIGHT_BACK);
 
-static auto drive = ChassisControllerFactory::create(
-		{RobotStates::BASE_LEFT_FRONT,RobotStates::BASE_LEFT_BACK},
-		{-RobotStates::BASE_RIGHT_FRONT,-RobotStates::BASE_RIGHT_BACK}, 
-		AbstractMotor::gearset::green,
-        {4_in, 12.5_in}); //12.5
+okapi::AsyncMotionProfileController * Robot::turnController = 0;
+okapi::AsyncMotionProfileController * Robot::profileController = 0;
+okapi::AsyncPosIntegratedController * Robot::hoodController = 0;
+
+okapi::ChassisControllerIntegrated* Robot::base = 0;
 
 Robot::Robot() {
     collector = new Collector();
     nuc = new NucLauncher();
     cam = new Camera();
     
-    base = &drive;
     static std::vector<vision_object_s_t> flagsVector;
     Camera::targetVector = &flagsVector;
+
+    static auto drive = ChassisControllerFactory::create(
+		{RobotStates::BASE_LEFT_FRONT,RobotStates::BASE_LEFT_BACK},
+		{-RobotStates::BASE_RIGHT_FRONT,-RobotStates::BASE_RIGHT_BACK}, 
+		AbstractMotor::gearset::green,
+        {4_in, 12.5_in}); //12.5
+    
+    Robot::base = &drive;
+
+    static auto _hoodController = AsyncControllerFactory::posIntegrated(*(nuc->hood_Motor), 100);
+    static auto _turnController = AsyncControllerFactory::motionProfile(
+        in2meter(20.0),  // Maximum linear velocity of the Chassis in m/s
+        in2meter(30.0),  // Maximum linear acceleration of the Chassis in m/s/s
+        in2meter(300.0), // Maximum linear jerk of the Chassis in m/s/s/s
+        *base // Chassis Controller
+    );
+
+    static auto _profileController = AsyncControllerFactory::motionProfile(
+        in2meter(45.0),  // Maximum linear velocity of the Chassis in m/s 40
+        in2meter(65.0),  // Maximum linear acceleration of the Chassis in m/s/s 60
+        in2meter(500.0), // Maximum linear jerk of the Chassis in m/s/s/s
+        *base // Chassis Controller
+    );
+    turnController = &_turnController;
+    profileController = &_profileController;
+    hoodController = &_hoodController;
 }
 
 Robot* Robot::getInstance() {
@@ -86,8 +111,13 @@ void Robot::alignTheBot(void * param) {
     double err;
     int baseSpeed = 10; 
     while(true) {
-        if(RobotStates::targetFlag_X != 0 && RobotStates::is_autoAligning) {
-            err = (VISION_FOV_WIDTH / 2.0 + RobotStates::hortizontal_correction) - RobotStates::targetFlag_X;
+        if(RobotStates::is_autoAligning) {
+            if(RobotStates::targetFlag_X != 0) {
+                err = (VISION_FOV_WIDTH / 2.0 + RobotStates::hortizontal_correction) - RobotStates::targetFlag_X;
+            } else {
+                err = 0;
+            }
+            
             if(!RobotStates::is_Aligned) {
                 int output = (err > 0) ? (baseSpeed + 0.5 * err) : (-baseSpeed + 0.5 * err);
                 if(fabs(err) > 5) {
@@ -110,22 +140,70 @@ void Robot::alignTheBot(void * param) {
     }
 }
 
-void Robot::assistShooting(void * param) {
-    RobotStates::is_Shooting_Ball = false;
-    RobotStates::is_Collecting_Ball = false;
-    
-    if(RobotStates::fieldColor == RobotStates::FieldColor::BLUE) {
-        RobotStates::hortizontal_correction = -15.0;
+void Robot::toggle_AssistShooting() {
+    if(RobotStates::is_assistant_Shooting) { //disrupt
+        RobotStates::is_assistant_Shooting = false;
+        Robot::hoodController->flipDisable(true);
+        RobotStates::is_Collecting_Ball = false;
+        RobotStates::is_Shooting_Ball = false;
+        Robot::nuc->hood_Motor->setReversed(false);
     } else {
-        RobotStates::hortizontal_correction = 15.0;
-    }
-    RobotStates::is_Aligned = false;
-    RobotStates::is_autoAligning = true;
-    pros::delay(200);
-    while(!RobotStates::is_Aligned) {
-        pros::delay(50);
+        RobotStates::is_assistant_Shooting = true; //enable
     }
     
+    pros::delay(500);
+}
+
+void Robot::assistShooting(void * param) {
+    while(true) {
+        if(RobotStates::is_assistant_Shooting) {
+            RobotStates::is_Shooting_Ball = false;
+            RobotStates::is_Collecting_Ball = false;
+
+            Robot::nuc->hood_Motor->setReversed(true);
+            Robot::hoodController->setMaxVelocity(200);
+            
+            if(RobotStates::fieldColor == RobotStates::FieldColor::BLUE) {
+                RobotStates::hortizontal_correction = -15.0;
+            } else {
+                RobotStates::hortizontal_correction = 15.0;
+            }
+            RobotStates::is_Aligned = false;
+            RobotStates::is_autoAligning = true;
+            pros::delay(200);
+            while(!RobotStates::is_Aligned) {
+                pros::delay(50);
+            }
+
+            RobotStates::hortizontal_correction = 0.0;
+            Robot::hoodController->reset();
+            Robot::hoodController->tarePosition();
+            Robot::hoodController->flipDisable(false);
+            Robot::hoodController->setTarget(0); //60 //40
+            Robot::hoodController->waitUntilSettled();
+            RobotStates::is_Shooting_Ball = true;
+            pros::delay(100);
+            RobotStates::is_Shooting_Ball = false;
+            RobotStates::is_Collecting_Ball = true;
+            pros::delay(250);
+            RobotStates::is_Collecting_Ball = false;
+
+            Robot::hoodController->setTarget(130); //130
+            Robot::hoodController->waitUntilSettled();
+            RobotStates::is_Shooting_Ball = true;
+            pros::delay(200);
+            RobotStates::is_Shooting_Ball = false;
+            
+            Robot::hoodController->flipDisable(true);
+            
+            Robot::nuc->hood_Motor->setReversed(false);
+
+            Robot::nuc->hoodDown();
+            pros::delay(500);
+            RobotStates::is_assistant_Shooting = false;
+        }
+        pros::delay(200);
+    }
 }
 
 void Robot::rest_before_driver() {
@@ -139,7 +217,14 @@ void Robot::rest_before_driver() {
 
     RobotStates::hortizontal_correction = 0.0;
 
+    Robot::hoodController->flipDisable(true);
+    Robot::hoodController->reset();
+
     Robot::nuc->hood_Motor->setReversed(false);
     Robot::rightFront_Motor->setReversed(true);
     Robot::rightBack_Motor->setReversed(true);
+}
+
+double Robot::in2meter(double in) {
+    return (in / 39.37);
 }

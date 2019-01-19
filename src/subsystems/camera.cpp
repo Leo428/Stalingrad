@@ -1,13 +1,15 @@
 #include "userincludes/subsystems/camera.hpp"
 #include <cmath>
 
-Vision* Camera::scope = 0;
+Vision * Camera::buttomCam = 0;
+// Vision * Camera::topCam = 0;
 std::vector<vision_object_s_t> * Camera::targetVector = 0;
 
+
 Camera::Camera() {
-    scope = new Vision(RobotStates::CAMERA_STATIC, E_VISION_ZERO_TOPLEFT);
-    scope->clear_led();
-    // flagCode = scope->create_color_code(3,1,0,0,0);
+    buttomCam = new Vision(RobotStates::CAMERA_STATIC, E_VISION_ZERO_TOPLEFT);
+    buttomCam->clear_led();
+    // flagCode = buttomCam->create_color_code(3,1,0,0,0);
 }
 
 double Camera::controllerGet() {
@@ -67,17 +69,17 @@ void Camera::selectTarget() {
 }
 
 void Camera::updateSensor() {
-    printf("I see %d objects;\n", scope->get_object_count());
-    if(scope->get_object_count() > 0 && scope->get_object_count() != 2147483647) {
+    printf("I see %d objects;\n", buttomCam->get_object_count());
+    if(buttomCam->get_object_count() > 0 && buttomCam->get_object_count() != 2147483647) {
         RobotStates::is_Static_Cam_Detecting = true;
     } else {
         RobotStates::is_Static_Cam_Detecting = false;
     }
     printf("I see objects: %d\n", RobotStates::is_Static_Cam_Detecting);
-    // vision_object_s_t flag = scope->get_by_code(0, flagCode);
+    // vision_object_s_t flag = buttomCam->get_by_code(0, flagCode);
     // printf("code test: %d \n", flag.angle);
     // targetVector().clear();
-    scope->read_by_size(0, 6, this->allFlags);
+    buttomCam->read_by_size(0, 6, this->allFlags);
     // sortByHeight();
     // filterTarget();
     hortizontalSort();
