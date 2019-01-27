@@ -2,13 +2,15 @@
 #include <cmath>
 
 Vision * Camera::buttomCam = 0;
-// Vision * Camera::topCam = 0;
+Vision * Camera::topCam = 0;
 std::vector<vision_object_s_t> * Camera::targetVector = 0;
-
+std::vector<vision_object_s_t> * Camera::hoodVector = 0;
 
 Camera::Camera() {
     buttomCam = new Vision(RobotStates::CAMERA_STATIC, E_VISION_ZERO_TOPLEFT);
+    topCam = new Vision(RobotStates::CAMERA_PORT, E_VISION_ZERO_TOPLEFT);
     buttomCam->clear_led();
+    topCam->clear_led();
     // flagCode = buttomCam->create_color_code(3,1,0,0,0);
 }
 
@@ -19,21 +21,23 @@ double Camera::controllerGet() {
 }
 
 void Camera::sortByHeight() {
-    std::sort(allFlags, allFlags + 6, compareHeight);
+    std::sort(hoodFlags, hoodFlags + 6, compareHeight);
 }
 
 void Camera::filterTarget() {
     // int index = 0;
-    targetVector->clear();
-    for(pros::vision_object_s_t obj : this->allFlags) {
-        double ratio1 = fabs((obj.height*1.0) / (obj.width*1.0) - 1.0);
-        double ratio2 = fabs((obj.width*1.0) / (obj.height*1.0) - 1.0);
+    hoodVector->clear();
+    for(pros::vision_object_s_t obj : this->hoodFlags) {
+        // double ratio1 = fabs((obj.height*1.0) / (obj.width*1.0) - 1.0);
+        // double ratio2 = fabs((obj.width*1.0) / (obj.height*1.0) - 1.0);
         if (obj.height > 10 && obj.width > 10) {
-            if(true) { //ratio1 < 0.8 && ratio2 < 0.8
+            if(RobotStates::fieldColor == RobotStates::FieldColor::BLUE) {
                 if (obj.signature == 1) {
-                    targetVector->push_back(obj);
-                    // this->targetFlags[index] = obj;
-                    // index++;
+                    hoodVector->push_back(obj);
+                }
+            } else if (RobotStates::fieldColor == RobotStates::FieldColor::RED) {
+                if (obj.signature == 2) {
+                    hoodVector->push_back(obj);
                 }
             }
         }
@@ -80,6 +84,7 @@ void Camera::updateSensor() {
     // printf("code test: %d \n", flag.angle);
     // targetVector().clear();
     buttomCam->read_by_size(0, 6, this->allFlags);
+    // topCam->read_by_size(0, 6, hoodFlags);
     // sortByHeight();
     // filterTarget();
     hortizontalSort();
@@ -96,16 +101,28 @@ void Camera::updateSensor() {
     vision_object_s_t target;
     if(!targetVector->empty()) {
         target = targetVector->at(0);
-        RobotStates::targetFlag_Y = target.y_middle_coord * 1.0;
+        // RobotStates::targetFlag_Y = target.y_middle_coord * 1.0;
         RobotStates::targetFlag_X = target.x_middle_coord * 1.0;
         // this->targetY = target.height * (1.0);
         // this->targetY = -0.0235 * pow(this->targetY, 3) + 1.1648*pow(this->targetY,2)-23.192*this->targetY+324.13;
     } else {
-        RobotStates::targetFlag_Y = 0;
+        // RobotStates::targetFlag_Y = 0;
         RobotStates::targetFlag_X = 0;
         // this->targetY = 0;
     }
 
+    // vision_object_s_t hood_target;
+    // if(!hoodVector->empty()) {
+    //     hood_target = hoodVector->at(0);
+    //     RobotStates::targetFlag_Y = hood_target.y_middle_coord * 1.0;
+    //     // RobotStates::targetFlag_X = target.x_middle_coord * 1.0;
+    //     // this->targetY = target.height * (1.0);
+    //     // this->targetY = -0.0235 * pow(this->targetY, 3) + 1.1648*pow(this->targetY,2)-23.192*this->targetY+324.13;
+    // } else {
+    //     RobotStates::targetFlag_Y = 0;
+    //     // RobotStates::targetFlag_X = 0;
+    //     // this->targetY = 0;
+    // }
     // for(vision_object_s_t obj : *targetVector)
     // // for(vision_object_s_t obj : this->targetFlags)
     // {

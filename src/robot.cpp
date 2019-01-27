@@ -9,10 +9,12 @@ okapi::Motor * Robot::leftFront_Motor = new okapi::Motor(RobotStates::BASE_LEFT_
 okapi::Motor * Robot::leftBack_Motor = new okapi::Motor(RobotStates::BASE_LEFT_BACK);
 okapi::Motor * Robot::rightFront_Motor = new okapi::Motor(RobotStates::BASE_RIGHT_FRONT);
 okapi::Motor * Robot::rightBack_Motor = new okapi::Motor(RobotStates::BASE_RIGHT_BACK);
-
+okapi::AsyncMotionProfileController * Robot::mediumSpeedController = 0;
 okapi::AsyncMotionProfileController * Robot::turnController = 0;
 okapi::AsyncMotionProfileController * Robot::profileController = 0;
+
 okapi::AsyncPosIntegratedController * Robot::hoodController = 0;
+// okapi::AsyncPosPIDController * Robot::cam_hood_Controller = 0;
 
 okapi::ChassisControllerIntegrated* Robot::base = 0;
 
@@ -34,9 +36,9 @@ Robot::Robot() {
 
     static auto _hoodController = AsyncControllerFactory::posIntegrated(*(nuc->hood_Motor), 100);
     static auto _turnController = AsyncControllerFactory::motionProfile(
-        in2meter(20.0),  // Maximum linear velocity of the Chassis in m/s
-        in2meter(30.0),  // Maximum linear acceleration of the Chassis in m/s/s
-        in2meter(300.0), // Maximum linear jerk of the Chassis in m/s/s/s
+        in2meter(20.0),  // Maximum linear velocity of the Chassis in m/s 20
+        in2meter(30.0),  // Maximum linear acceleration of the Chassis in m/s/s 30
+        in2meter(300.0), // Maximum linear jerk of the Chassis in m/s/s/s 300
         *base // Chassis Controller
     );
 
@@ -46,9 +48,24 @@ Robot::Robot() {
         in2meter(500.0), // Maximum linear jerk of the Chassis in m/s/s/s
         *base // Chassis Controller
     );
+
+    static auto _mediumSpeedController = AsyncControllerFactory::motionProfile(
+        in2meter(20.0),  // Maximum linear velocity of the Chassis in m/s 40
+        in2meter(30.0),  // Maximum linear acceleration of the Chassis in m/s/s 60
+        in2meter(300.0), // Maximum linear jerk of the Chassis in m/s/s/s
+        *base // Chassis Controller
+    );
+
+    // std::shared_ptr<ControllerInput<double>> iinput = std::make_shared<Camera>();
+    // std::shared_ptr<ControllerOutput<double>> ioutput (Robot::nuc->hood_Motor);
+    // auto hoodTime = TimeUtilFactory::withSettledUtilParams(5, 5, 100_ms);
+	// static auto _cam_hood_Controller = AsyncControllerFactory::posPID(iinput, ioutput, 0.002, 0.0, 0.005, 0.0, std::make_unique<okapi::PassthroughFilter>(), hoodTime);
+
     turnController = &_turnController;
     profileController = &_profileController;
+    mediumSpeedController = &_mediumSpeedController;
     hoodController = &_hoodController;
+    // cam_hood_Controller = &_cam_hood_Controller;
 }
 
 Robot* Robot::getInstance() {
@@ -73,6 +90,8 @@ void Robot::operate_BallCollector(void * param) {
     while(true) {
         if(RobotStates::is_Shooting_Ball) {
             Robot::collector->shootBall();
+            // delay(100);
+            // RobotStates::is_Shooting_Ball = false;
         } else if(RobotStates::is_Collecting_Ball) {
             Robot::collector->collectBalls();
         } else {
@@ -140,6 +159,33 @@ void Robot::alignTheBot(void * param) {
     }
 }
 
+void Robot::alignTheHood(void * param) {
+    double err;
+    int baseSpeed = 10; 
+    while(true) {
+        if(RobotStates::is_autoHooding) {
+            if(RobotStates::targetFlag_Y != 0) {
+                err = (VISION_FOV_HEIGHT / 2.0 + RobotStates::hortizontal_correction) - RobotStates::targetFlag_Y;
+            } else {
+                err = 0;
+            }
+            
+            if(!RobotStates::is_Hooded) {
+                int output = (err > 0) ? (baseSpeed + 0.5 * err) : (-baseSpeed + 0.5 * err);
+                if(fabs(err) > 5) {
+                    Robot::nuc->hood_Motor->move(output);
+                } else {
+                    Robot::nuc->hood_Motor->move(0);
+                    RobotStates::is_Hooded = true;
+                    RobotStates::is_autoHooding = false;
+                }
+                printf("hood output: %d \n", output);
+            }
+        }
+        pros::delay(10);
+    }
+}
+
 void Robot::toggle_AssistShooting() {
     if(RobotStates::is_assistant_Shooting) { //disrupt
         RobotStates::is_assistant_Shooting = false;
@@ -170,9 +216,9 @@ void Robot::assistShooting(void * param) {
             }
             RobotStates::is_Aligned = false;
             RobotStates::is_autoAligning = true;
-            pros::delay(200);
+            pros::delay(100); //200
             while(!RobotStates::is_Aligned) {
-                pros::delay(50);
+                pros::delay(10); //50
             }
 
             RobotStates::hortizontal_correction = 0.0;
@@ -182,28 +228,52 @@ void Robot::assistShooting(void * param) {
             Robot::hoodController->setTarget(0); //60 //40
             Robot::hoodController->waitUntilSettled();
             RobotStates::is_Shooting_Ball = true;
-            pros::delay(100);
-            RobotStates::is_Shooting_Ball = false;
-            RobotStates::is_Collecting_Ball = true;
-            pros::delay(250);
-            RobotStates::is_Collecting_Ball = false;
-
+            delay(200); //150
             Robot::hoodController->setTarget(130); //130
+            // RobotStates::is_Shooting_Ball = true;
+
+            // pros::delay(100);
+            // RobotStates::is_Shooting_Ball = false;
+
+            // RobotStates::is_Collecting_Ball = true;
+            // pros::delay(250);
+            // RobotStates::is_Collecting_Ball = false;
+
+            // Robot::hoodController->setTarget(130); //130
             Robot::hoodController->waitUntilSettled();
-            RobotStates::is_Shooting_Ball = true;
-            pros::delay(200);
+            // RobotStates::is_Shooting_Ball = true;
+            // pros::delay(200);
             RobotStates::is_Shooting_Ball = false;
             
             Robot::hoodController->flipDisable(true);
             
             Robot::nuc->hood_Motor->setReversed(false);
 
+            delay(500);
             Robot::nuc->hoodDown();
             pros::delay(500);
+            Robot::nuc->hoodStop();
             RobotStates::is_assistant_Shooting = false;
         }
         pros::delay(200);
     }
+}
+
+void Robot::oneShot(void * param) {
+    while(true) {
+        if(RobotStates::is_oneShot) {
+            RobotStates::is_Shooting_Ball = true;
+            pros::delay(100);
+            RobotStates::is_Shooting_Ball = false;
+            RobotStates::is_oneShot = false;
+        }
+        pros::delay(100);
+    }
+} 
+
+void Robot::toggle_OneShot() {
+    RobotStates::is_oneShot = !RobotStates::is_oneShot;
+    pros::delay(200);
 }
 
 void Robot::rest_before_driver() {
@@ -214,6 +284,7 @@ void Robot::rest_before_driver() {
     RobotStates::is_Flywheel_Running = false;
     RobotStates::is_autoAligning = false;
     RobotStates::is_Aligned = false;
+    RobotStates::is_oneShot = false;
 
     RobotStates::hortizontal_correction = 0.0;
 

@@ -18,10 +18,11 @@ class Collector {
         void capUpSlowly();
         void capStop();
         
-
-    private:
         okapi::Motor* ballCollector = 0;
         okapi::Motor* capCollector = 0;
+
+    private:
+        
 };
 
 #endif

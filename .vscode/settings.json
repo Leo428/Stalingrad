@@ -1,0 +1,12 @@
+{
+    "files.associations": {
+        "__split_buffer": "cpp",
+        "__tree": "cpp",
+        "atomic": "cpp",
+        "ios": "cpp",
+        "map": "cpp",
+        "string": "cpp",
+        "system_error": "cpp",
+        "vector": "cpp"
+    }
+}

@@ -5,6 +5,7 @@ class RobotStates {
     public: 
         RobotStates();
 
+        static RobotStates* getInstance();
         //ports config
         const static double ROBOT_WIDTH_in;
         const static double ROBOT_LENGTH_in;
@@ -27,6 +28,7 @@ class RobotStates {
         static double targetFlag_X;
         static double targetFlag_Y;
         static double hortizontal_correction;
+        static double vertical_correction;
         
         //in game states
         enum FieldColor {
@@ -37,7 +39,10 @@ class RobotStates {
 
         enum AutoChoice {
             NO_AUTO,
-            FOUR_FLAGS
+            FOUR_FLAGS,
+            THREE_FLAGS_PLAT,
+            THREE_FLAGS_CAP,
+            THREE_FLAGS_SKILLS
         };
 
         static FieldColor fieldColor;
@@ -49,11 +54,14 @@ class RobotStates {
         static bool is_Collecting_Ball;
         static bool is_Shooting_Ball;
         static bool is_autoAligning; 
+        static bool is_autoHooding;
+        static bool is_Hooded;
         static bool is_Aligned;
         static bool is_Static_Cam_Detecting;
         static bool is_assistant_Shooting;
+        static bool is_oneShot;
     private: 
-
+        static RobotStates* instance;
 };
 
 #endif

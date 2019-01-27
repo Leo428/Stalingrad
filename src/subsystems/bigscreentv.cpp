@@ -67,7 +67,7 @@ void BigScreenTV::create_tab1(lv_obj_t * tab_view)
 
 	lv_obj_t * ddl1 = lv_ddlist_create(tab_view, NULL);
 	lv_obj_align(ddl1, tab_view, LV_ALIGN_OUT_TOP_LEFT, 20, 0);
-	lv_ddlist_set_options(ddl1, "No Auto\nFour Flags");
+	lv_ddlist_set_options(ddl1, "No Auto\n Four Flags\n3 Flags PLat\n 3 Flags Cap\n Skills");
 	lv_ddlist_set_action(ddl1, selAuto);
 	// // lv_ddlist_open(ddl1, true);
 	// // lv_ddlist_set_selected(ddl1, 0);
@@ -79,6 +79,15 @@ lv_res_t BigScreenTV::selAuto(lv_obj_t * list) {
 	switch(lv_ddlist_get_selected(list)){
 		case (1):
 			RobotStates::autoChoice = RobotStates::AutoChoice::FOUR_FLAGS;
+			break;
+		case (2):
+			RobotStates::autoChoice = RobotStates::AutoChoice::THREE_FLAGS_PLAT;
+			break;
+		case (3):
+			RobotStates::autoChoice = RobotStates::AutoChoice::THREE_FLAGS_CAP;
+			break;
+		case (4):
+			RobotStates::autoChoice = RobotStates::AutoChoice::THREE_FLAGS_SKILLS;
 			break;
 		default:
 			RobotStates::autoChoice = RobotStates::AutoChoice::NO_AUTO;
