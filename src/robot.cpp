@@ -254,6 +254,31 @@ void Robot::assistShooting(void * param) {
             pros::delay(500);
             Robot::nuc->hoodStop();
             RobotStates::is_assistant_Shooting = false;
+
+            //previous version: slow 
+            //TODO: change it to this at Crespi
+            // RobotStates::is_Shooting_Ball = true;
+            // pros::delay(100);
+            // RobotStates::is_Shooting_Ball = false;
+            // // RobotStates::is_Collecting_Ball = true;
+            // // pros::delay(250);
+            // // RobotStates::is_Collecting_Ball = false;
+
+            // Robot::hoodController->setTarget(130); //130
+            // Robot::hoodController->waitUntilSettled();
+            // RobotStates::is_Shooting_Ball = true;
+            // pros::delay(200);
+            // RobotStates::is_Shooting_Ball = false;
+            
+            // Robot::hoodController->flipDisable(true);
+            
+            // Robot::nuc->hood_Motor->setReversed(false);
+
+            // // delay(500);
+            // Robot::nuc->hoodDown();
+            // pros::delay(500);
+            // Robot::nuc->hoodStop();
+            // RobotStates::is_assistant_Shooting = false;
         }
         pros::delay(200);
     }
