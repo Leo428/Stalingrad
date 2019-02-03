@@ -5,6 +5,8 @@ Collector::Collector() {
     ballCollector->setGearing(okapi::AbstractMotor::gearset::green);
     capCollector = new okapi::Motor(RobotStates::CAP_PORT);
     capCollector->setGearing(okapi::AbstractMotor::gearset::green);
+
+    capCollector->setBrakeMode(okapi::AbstractMotor::brakeMode::hold);
 }
 
 void Collector::collectBalls() {
