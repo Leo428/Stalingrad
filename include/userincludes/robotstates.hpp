@@ -59,6 +59,7 @@ class RobotStates {
         static bool is_Aligned;
         static bool is_Static_Cam_Detecting;
         static bool is_assistant_Shooting;
+        static bool is_assistant_Shooting_back;
         static bool is_oneShot;
     private: 
         static RobotStates* instance;

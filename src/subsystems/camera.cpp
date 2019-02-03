@@ -24,6 +24,10 @@ void Camera::sortByHeight() {
     std::sort(hoodFlags, hoodFlags + 6, compareHeight);
 }
 
+void Camera::sortByCenter() {
+    std::sort(targetVector->begin(), targetVector->end(), compareCenter);
+}
+
 void Camera::filterTarget() {
     // int index = 0;
     hoodVector->clear();
@@ -63,6 +67,10 @@ bool Camera::compareHeight(vision_object_s_t i, vision_object_s_t j) {
     return (i.y_middle_coord < j.y_middle_coord);
 }
 
+bool Camera::compareCenter(vision_object_s_t i, vision_object_s_t j) {
+    return ((fabs(i.x_middle_coord * 1.0 - (VISION_FOV_WIDTH * 1.0)/2) < fabs(j.x_middle_coord * 1.0 - (VISION_FOV_WIDTH * 1.0)/2)));
+}
+
 void Camera::selectTarget() {
     if(!targetVector->empty()) {
         double tempY = targetVector->at(0).height * (1.0);
@@ -88,6 +96,7 @@ void Camera::updateSensor() {
     // sortByHeight();
     // filterTarget();
     hortizontalSort();
+    sortByCenter();
     // for(vision_object_s_t obj : this->allFlags)
     // {
     //     // printf("flag color: %d; width: %d; height: %d \n", obj.signature, obj.width, obj.height);

@@ -89,16 +89,33 @@ void Robot::operate_Flywheel(void * param) {
 void Robot::operate_BallCollector(void * param) {
     while(true) {
         if(RobotStates::is_Shooting_Ball) {
-            Robot::collector->shootBall();
-            // delay(100);
-            // RobotStates::is_Shooting_Ball = false;
+            if(RobotStates::is_assistant_Shooting) {
+                Robot::collector->shootGood();
+            } else {
+                Robot::collector->shootBall();
+            }
         } else if(RobotStates::is_Collecting_Ball) {
             Robot::collector->collectBalls();
         } else {
             Robot::collector->stopCollector();
         }
-        pros::delay(50);
+        pros::delay(20);
     }
+}
+
+void Robot::operate_BallCollector_doubleShot(void * param) {
+    // while(true) {
+    //     if(RobotStates::is_assistant_Shooting) {
+    //         if(RobotStates::is_Shooting_Ball) {
+                
+    //         } else if(RobotStates::is_Collecting_Ball) {
+    //             Robot::collector->collectBalls();
+    //         } else {
+    //             Robot::collector->stopCollector();
+    //         }
+    //     }
+    //     pros::delay(20);
+    // }
 }
 
 void Robot::doubleShot(void * param) {
@@ -193,10 +210,26 @@ void Robot::toggle_AssistShooting() {
         RobotStates::is_Collecting_Ball = false;
         RobotStates::is_Shooting_Ball = false;
         Robot::nuc->hood_Motor->setReversed(false);
+        RobotStates::is_assistant_Shooting_back = false;
     } else {
         RobotStates::is_assistant_Shooting = true; //enable
+        RobotStates::is_assistant_Shooting_back = false;
     }
-    
+    pros::delay(500);
+}
+
+void Robot::toggle_AssistShooting_back() {
+    if(RobotStates::is_assistant_Shooting) { //disrupt
+        RobotStates::is_assistant_Shooting = false;
+        Robot::hoodController->flipDisable(true);
+        RobotStates::is_Collecting_Ball = false;
+        RobotStates::is_Shooting_Ball = false;
+        Robot::nuc->hood_Motor->setReversed(false);
+        RobotStates::is_assistant_Shooting_back = false;
+    } else {
+        RobotStates::is_assistant_Shooting = true; //enable
+        RobotStates::is_assistant_Shooting_back = true;
+    }
     pros::delay(500);
 }
 
@@ -207,16 +240,24 @@ void Robot::assistShooting(void * param) {
             RobotStates::is_Collecting_Ball = false;
 
             Robot::nuc->hood_Motor->setReversed(true);
-            Robot::hoodController->setMaxVelocity(200);
+            // Robot::hoodController->setMaxVelocity(200);
             
             if(RobotStates::fieldColor == RobotStates::FieldColor::BLUE) {
-                RobotStates::hortizontal_correction = -15.0;
+                if(RobotStates::is_assistant_Shooting_back) {
+                    RobotStates::hortizontal_correction = -5.0;
+                } else {
+                    RobotStates::hortizontal_correction = -15.0;
+                }
             } else {
-                RobotStates::hortizontal_correction = 15.0;
+                if(RobotStates::is_assistant_Shooting_back) {
+                    RobotStates::hortizontal_correction = 5.0;
+                } else {
+                    RobotStates::hortizontal_correction = 15.0;
+                }
             }
             RobotStates::is_Aligned = false;
             RobotStates::is_autoAligning = true;
-            pros::delay(100); //200
+            pros::delay(50); //200
             while(!RobotStates::is_Aligned) {
                 pros::delay(10); //50
             }
@@ -225,82 +266,174 @@ void Robot::assistShooting(void * param) {
             Robot::hoodController->reset();
             Robot::hoodController->tarePosition();
             Robot::hoodController->flipDisable(false);
-            Robot::hoodController->setTarget(0); //60 //40
+            
+            if(RobotStates::is_assistant_Shooting_back) {
+                Robot::hoodController->setTarget(70); //60 //40
+            } else {
+                Robot::hoodController->setTarget(0); //60 //40
+            }
+            // Robot::hoodController->setTarget(0); //60 //40
             Robot::hoodController->waitUntilSettled();
 
             //TODO: the new double shot, need to be extremely fast!
+            RobotStates::is_Shooting_Ball = true;
+            delay(200); //150
+            if(RobotStates::is_assistant_Shooting_back) {
+                Robot::hoodController->setTarget(80); //60 //40
+            } else {
+                Robot::hoodController->setTarget(100); //110 //60 //40
+            }
+            // Robot::hoodController->setTarget(110); //130
             // RobotStates::is_Shooting_Ball = true;
-            // delay(200); //150
+
+            // pros::delay(100);
+            // RobotStates::is_Shooting_Ball = false;
+
+            // RobotStates::is_Collecting_Ball = true;
+            // pros::delay(250);
+            // RobotStates::is_Collecting_Ball = false;
+
             // Robot::hoodController->setTarget(130); //130
-            // // RobotStates::is_Shooting_Ball = true;
+            Robot::hoodController->waitUntilSettled();
+            // RobotStates::is_Shooting_Ball = true;
+            // pros::delay(200);
+            
+            
+            Robot::hoodController->flipDisable(true);
+            
+            Robot::nuc->hood_Motor->setReversed(false);
 
-            // // pros::delay(100);
-            // // RobotStates::is_Shooting_Ball = false;
+            delay(500);
+            Robot::nuc->hoodDown();
+            RobotStates::is_Shooting_Ball = false;
+            pros::delay(500);
+            Robot::nuc->hoodStop();
+            RobotStates::is_assistant_Shooting = false;
 
+            //previous version: slow 
+            //TODO: change it to this at Crespi
+            // RobotStates::is_Shooting_Ball = true;
+            // pros::delay(100);
+            // RobotStates::is_Shooting_Ball = false;
             // // RobotStates::is_Collecting_Ball = true;
-            // // pros::delay(250);
+            // pros::delay(250);
             // // RobotStates::is_Collecting_Ball = false;
 
-            // // Robot::hoodController->setTarget(130); //130
+            // Robot::hoodController->setTarget(130); //130
             // Robot::hoodController->waitUntilSettled();
-            // // RobotStates::is_Shooting_Ball = true;
-            // // pros::delay(200);
+            // RobotStates::is_Shooting_Ball = true;
+            // pros::delay(200);
             // RobotStates::is_Shooting_Ball = false;
             
             // Robot::hoodController->flipDisable(true);
             
             // Robot::nuc->hood_Motor->setReversed(false);
 
-            // delay(500);
+            // // delay(500);
             // Robot::nuc->hoodDown();
             // pros::delay(500);
             // Robot::nuc->hoodStop();
             // RobotStates::is_assistant_Shooting = false;
-
-            //previous version: slow 
-            //TODO: change it to this at Crespi
-            RobotStates::is_Shooting_Ball = true;
-            pros::delay(100);
-            RobotStates::is_Shooting_Ball = false;
-            // RobotStates::is_Collecting_Ball = true;
-            // pros::delay(250);
-            // RobotStates::is_Collecting_Ball = false;
-
-            Robot::hoodController->setTarget(130); //130
-            Robot::hoodController->waitUntilSettled();
-            RobotStates::is_Shooting_Ball = true;
-            pros::delay(200);
-            RobotStates::is_Shooting_Ball = false;
-            
-            Robot::hoodController->flipDisable(true);
-            
-            Robot::nuc->hood_Motor->setReversed(false);
-
-            // delay(500);
-            Robot::nuc->hoodDown();
-            pros::delay(500);
-            Robot::nuc->hoodStop();
-            RobotStates::is_assistant_Shooting = false;
         }
         pros::delay(200);
     }
 }
 
-void Robot::oneShot(void * param) {
-    while(true) {
-        if(RobotStates::is_oneShot) {
-            RobotStates::is_Shooting_Ball = true;
-            pros::delay(100);
-            RobotStates::is_Shooting_Ball = false;
-            RobotStates::is_oneShot = false;
+void Robot::oneShot2Mid_withAssistant() {
+    RobotStates::is_assistant_Shooting = true;
+    if(RobotStates::is_assistant_Shooting) {
+        RobotStates::is_Shooting_Ball = false;
+        RobotStates::is_Collecting_Ball = false;
+        Robot::nuc->hood_Motor->setReversed(true);
+        
+        if(RobotStates::fieldColor == RobotStates::FieldColor::BLUE) {
+            RobotStates::hortizontal_correction = -5.0;
+        } else {
+            RobotStates::hortizontal_correction = 5.0;
         }
-        pros::delay(100);
-    }
-} 
+        // if(RobotStates::fieldColor == RobotStates::FieldColor::BLUE) {
+        //     if(RobotStates::is_assistant_Shooting_back) {
+        //         RobotStates::hortizontal_correction = -5.0;
+        //     } else {
+        //         RobotStates::hortizontal_correction = -15.0;
+        //     }
+        // } else {
+        //     if(RobotStates::is_assistant_Shooting_back) {
+        //         RobotStates::hortizontal_correction = 5.0;
+        //     } else {
+        //         RobotStates::hortizontal_correction = 15.0;
+        //     }
+        // }
+        RobotStates::is_Aligned = false;
+        RobotStates::is_autoAligning = true;
+        pros::delay(50); //200
+        while(!RobotStates::is_Aligned) {
+            pros::delay(10); //50
+        }
+        RobotStates::hortizontal_correction = 0.0;
+        Robot::hoodController->reset();
+        Robot::hoodController->tarePosition();
+        Robot::hoodController->flipDisable(false);
+        
+        delay(500);
+        // RobotStates::is_Shooting_Ball = true;
+        
+        Robot::hoodController->setTarget(110); //60 //40 //50 //70 //80 //100
+        
+        Robot::hoodController->waitUntilSettled();
+        delay(100); //100 //150
+        RobotStates::is_Shooting_Ball = true;
+        //TODO: the new double shot, need to be extremely fast!
+        
 
-void Robot::toggle_OneShot() {
-    RobotStates::is_oneShot = !RobotStates::is_oneShot;
-    pros::delay(200);
+        // Robot::hoodController->setTarget(110); //60 //40 //0
+        // Robot::hoodController->waitUntilSettled();
+
+        // delay(500);
+        
+        Robot::hoodController->flipDisable(true);
+        Robot::nuc->hood_Motor->setReversed(false);
+        delay(300);
+        RobotStates::is_Shooting_Ball = false;
+        RobotStates::is_Collecting_Ball = true;
+        Robot::nuc->hoodDown();
+        pros::delay(500);
+        Robot::nuc->hoodStop();
+        RobotStates::is_assistant_Shooting = false;
+    }
+}
+
+void Robot::oneShot2Enemy_withAssistant() {
+    RobotStates::is_assistant_Shooting = true;
+    if(RobotStates::is_assistant_Shooting) {
+        Robot::nuc->hood_Motor->setReversed(true);
+        
+        if(RobotStates::fieldColor == RobotStates::FieldColor::BLUE) {
+            RobotStates::hortizontal_correction = 0; //-5
+        } else {
+            RobotStates::hortizontal_correction = 5.0;
+        }
+        
+        // delay(500);
+        RobotStates::hortizontal_correction = 0.0;
+        Robot::hoodController->reset();
+        Robot::hoodController->tarePosition();
+        Robot::hoodController->flipDisable(false);
+        
+        Robot::hoodController->setTarget(100);
+        
+        Robot::hoodController->waitUntilSettled();
+        //TODO: the new double shot, need to be extremely fast!
+        RobotStates::is_Collecting_Ball = false;
+        // delay(50);
+        RobotStates::is_Shooting_Ball = true;
+        delay(500);
+
+        Robot::hoodController->flipDisable(true);
+        Robot::nuc->hood_Motor->setReversed(false);
+
+        RobotStates::is_assistant_Shooting = false;
+    }
 }
 
 void Robot::rest_before_driver() {

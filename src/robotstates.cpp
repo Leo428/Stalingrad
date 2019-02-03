@@ -19,6 +19,7 @@ bool RobotStates::is_autoAligning;
 bool RobotStates::is_Aligned;
 bool RobotStates::is_Static_Cam_Detecting; 
 bool RobotStates::is_assistant_Shooting;
+bool RobotStates::is_assistant_Shooting_back;
 bool RobotStates::is_autoHooding;
 bool RobotStates::is_Hooded;
 bool RobotStates::is_oneShot;

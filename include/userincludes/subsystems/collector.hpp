@@ -11,6 +11,7 @@ class Collector {
         //methods 
         void collectBalls();
         void shootBall();
+        void shootGood();
         void stopCollector(); 
         void capUp();
         void capDown();

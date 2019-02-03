@@ -22,8 +22,9 @@ class Robot {
         static void alignTheBot(void * param);
         static void alignTheHood(void * param);
         static void assistShooting(void * param);
+        // static void assistShooting_back(void * param);
         static void testTracking(void * param);
-        static void oneShot(void * param);
+        static void operate_BallCollector_doubleShot(void * param);
 
         static okapi::Motor * leftFront_Motor;
         static okapi::Motor * leftBack_Motor;
@@ -41,8 +42,10 @@ class Robot {
         // static okapi::AsyncPosPIDController * cam_hood_Controller;
 
         void rest_before_driver();
-        void toggle_AssistShooting(); 
-        void toggle_OneShot();
+        void toggle_AssistShooting();
+        void toggle_AssistShooting_back();
+        void oneShot2Mid_withAssistant();
+        void oneShot2Enemy_withAssistant();
         static double in2meter(double in);
         
     private:

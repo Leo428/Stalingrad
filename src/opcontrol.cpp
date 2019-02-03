@@ -18,79 +18,43 @@
  */
 
 okapi::Controller master;
-okapi::ControllerButton * shootButton = new ControllerButton(okapi::ControllerDigital::R2);
+// okapi::ControllerButton * shootButton = new ControllerButton(okapi::ControllerDigital::R2);
 bool vibrating = false;
 static double hoodDrive = 0;
 
-void vibrate(void* param) {
-	vibrating = true;
-	master.rumble("-");
-	pros::delay(1000);
-	vibrating = false;
-}
-
-void oneShot(void * param) {
+void showRPM(void* param) {
+	auto rpmStr = std::to_string(Robot::nuc->flywheel_Motor->getActualVelocity());
 	while(true) {
-		if(!RobotStates::is_assistant_Shooting) {
-			if(shootButton->isPressed()) {
-				
-				if(shootButton->changedToPressed()) {
-					RobotStates::is_Shooting_Ball = true;
-					delay(100);
-					RobotStates::is_Shooting_Ball = false;
-				} else {
-					RobotStates::is_Shooting_Ball = false;
-				}
-			} else {
-				shootButton->changedToPressed();
-				RobotStates::is_Shooting_Ball = false;
-			}
-		}
-		delay(50);
+		rpmStr = std::to_string(Robot::nuc->flywheel_Motor->getActualVelocity());
+		master.setText(0, 0, rpmStr);
+		delay(1000);
 	}
 }
 
 void opcontrol() {
 	Robot::getInstance()->rest_before_driver();
 	RobotStates::is_Flywheel_Running = true;
-	// static auto flipperController = okapi::AsyncControllerFactory::posIntegrated(*Robot::collector->capCollector);
-	// flipperController.setTarget(0);
-	// flipperController.flipDisable(false);
-	// pros::delay(500);
+
 	
 	Task flywheelTask(Robot::operate_Flywheel);
 	Task visionTask(Robot::testTracking);
 	Task collectorTask(Robot::operate_BallCollector);
-	Task oneShotTask(oneShot);
+	// Task velocityCollectorTask(Robot::operate_BallCollector_doubleShot);
+	// Task oneShotTask(oneShot);
 
 	// Task aimTask(Robot::autoAim_Task);
 	Task assistShooting(Robot::assistShooting);
 	Task alignTask(Robot::alignTheBot);
-	// Task oneShotTask(Robot::oneShot);
 
-	Robot::hoodController->setMaxVelocity(200);
+	Task displayRPM(showRPM);
 
-	// pros::delay(500);
+	// auto rpmStr = std::to_string(Robot::nuc->flywheel_Motor->getActualVelocity());
+	// Robot::hoodController->setMaxVelocity(200);
 
-	// std::vector<vision_object_s_t> gg;
-	// gg.clear();
-	
-	// nuc->aim();
 	
 	// std::shared_ptr<ControllerInput<double>> iinput = std::make_shared<Camera>();
 	// std::shared_ptr<ControllerOutput<double>> ioutput = std::make_shared<okapi::Motor>(6);
 	// std::shared_ptr<ControllerOutput<double>> ioutput (Robot::nuc->hood_Motor);
-
-	// auto hoodTime = TimeUtilFactory::withSettledUtilParams(20.0, 1000.0, 100_ms);
-	// auto hoodController = AsyncControllerFactory::posPID(iinput, ioutput, 0.002, 0.0, 0.005, 0.0, std::make_unique<okapi::PassthroughFilter>(), hoodTime);
-	// hoodController.flipDisable(true);
-	// Robot::nuc->hood_Motor->setReversed(false);
-	// hoodController.setOutputLimits(10.0, -10.0);
-	// hoodController.setSampleTime(20_ms);
-	// hoodController.setTarget(Robot::cam->targetY);
-	// hoodController.flipDisable(false);
-	// hoodController.waitUntilSettled();
-	// hoodController.flipDisable(true);
 	
 	while (true) {
 		Robot::base->tank(master.getAnalog(okapi::ControllerAnalog::leftY), master.getAnalog(okapi::ControllerAnalog::rightY), 0.2);
@@ -104,10 +68,13 @@ void opcontrol() {
 				RobotStates::is_Shooting_Ball = false;
 				RobotStates::is_Collecting_Ball = true;
 				// Robot::collector->collectBalls();
+			} else if (master.getDigital(okapi::ControllerDigital::R2)){
+				RobotStates::is_Collecting_Ball = false;
+				RobotStates::is_Shooting_Ball = true;
 			} else {
 				// Robot::collector->stopCollector();
 				RobotStates::is_Collecting_Ball = false;
-				// RobotStates::is_Shooting_Ball = false;
+				RobotStates::is_Shooting_Ball = false;
 			}
 		}
 
@@ -119,6 +86,7 @@ void opcontrol() {
 			Robot::collector->capDown();
 		} else {
 			Robot::collector->capStop();
+			// Robot::collector->capCollector->moveVelocity(0);
 			// flipperController.flipDisable(false);
 		}
 
@@ -140,11 +108,13 @@ void opcontrol() {
 			Robot::getInstance()->toggle_AssistShooting();
 			// Robot::cam->selectTarget();
 			// Robot::nuc->toggleAutoAim();
+		} else if (master.getDigital(okapi::ControllerDigital::B)) {
+			Robot::getInstance()->toggle_AssistShooting_back();
 		}
 
-		if(master.getDigital(okapi::ControllerDigital::B)) {
-			Robot::getInstance()->toggle_OneShot();
-		}
+		// if(master.getDigital(okapi::ControllerDigital::B)) {
+		// 	Robot::getInstance()->toggle_OneShot();
+		// }
 		
 		// drive.arcade(master.getAnalog(okapi::ControllerAnalog::leftY), master.getAnalog(okapi::ControllerAnalog::leftX));
 		// nuc->flywheel_Motor.moveVelocity(600);
@@ -160,6 +130,7 @@ void opcontrol() {
 		// 		Task vibeTask(vibrate);
 		// 	}
 		// }
-		pros::delay(1);
+		
+		pros::delay(10);
 	}
 }

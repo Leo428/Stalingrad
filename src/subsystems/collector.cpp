@@ -17,6 +17,14 @@ void Collector::shootBall() {
     // ballCollector->moveVoltage(-12000);
 }
 
+void Collector::shootGood() {
+    if(!RobotStates::is_assistant_Shooting_back) {
+        ballCollector->moveVelocity(-70);
+    } else {
+        ballCollector->moveVelocity(-50);
+    }
+}
+
 void Collector::stopCollector() {
     ballCollector->move(0);
     // ballCollector->moveVoltage(0);

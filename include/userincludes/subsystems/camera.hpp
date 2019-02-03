@@ -23,9 +23,11 @@ class Camera : public ControllerInput<double> {
     private:
         //methods
         void sortByHeight();
+        void sortByCenter();
         void hortizontalSort();
         void filterTarget();
         static bool compareHeight(vision_object_s_t i, vision_object_s_t j);
+        static bool compareCenter(vision_object_s_t i, vision_object_s_t j);
 
         //objects (flags)
         vision_object_s_t hoodFlags[6]; 
