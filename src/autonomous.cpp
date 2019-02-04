@@ -751,24 +751,24 @@ void testing() {
 }
 
 void autonomous() {
-    // switch(RobotStates::autoChoice){
-	// 	case (RobotStates::AutoChoice::FOUR_FLAGS):
-	// 		manyFlagsAuto();
-	// 		break;
-    //     case (RobotStates::AutoChoice::THREE_FLAGS_PLAT):
-	// 		threeFlags_Only_Plat();
-	// 		break;
-    //     case (RobotStates::AutoChoice::THREE_FLAGS_CAP):
-    //         threeFlags_plat();
-    //         break;
-    //     case (RobotStates::AutoChoice::THREE_FLAGS_SKILLS):
-    //         skills();
-    //         break;
-	// 	default:
-	// 		break;
-	// }
+    switch(RobotStates::autoChoice){
+		case (RobotStates::AutoChoice::FOUR_FLAGS):
+			manyFlagsAuto();
+			break;
+        case (RobotStates::AutoChoice::THREE_FLAGS_PLAT):
+			threeFlags_Only_Plat();
+			break;
+        case (RobotStates::AutoChoice::THREE_FLAGS_CAP):
+            threeFlags_plat();
+            break;
+        case (RobotStates::AutoChoice::THREE_FLAGS_SKILLS):
+            skills();
+            break;
+		default:
+			break;
+	}
 
-    backTile();
+    // backTile();
     // manyFlagsAuto();
     // threeFlags_plat();
     // threeFlags_Only_Plat();
