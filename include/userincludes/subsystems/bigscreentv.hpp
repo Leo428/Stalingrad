@@ -15,7 +15,8 @@ class BigScreenTV {
 		// variables
 		
 		static lv_obj_t * label_side_choice;
-		static lv_obj_t * label_static_cam_connection; 
+		static lv_obj_t * label_static_cam_connection;
+		static lv_obj_t * ddl1;
 
 		//methods
 		void createUIComponents();
@@ -26,6 +27,7 @@ class BigScreenTV {
 		//variables
 		static lv_res_t selSide(lv_obj_t * btn);
 		static lv_res_t selAuto(lv_obj_t * list);
+		static lv_res_t selNextAuto(lv_obj_t * btn);
 		
 		//methods
 		static void create_tab1(lv_obj_t * parent);

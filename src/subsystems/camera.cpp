@@ -81,13 +81,13 @@ void Camera::selectTarget() {
 }
 
 void Camera::updateSensor() {
-    printf("I see %d objects;\n", buttomCam->get_object_count());
+    // printf("I see %d objects;\n", buttomCam->get_object_count());
     if(buttomCam->get_object_count() > 0 && buttomCam->get_object_count() != 2147483647) {
         RobotStates::is_Static_Cam_Detecting = true;
     } else {
         RobotStates::is_Static_Cam_Detecting = false;
     }
-    printf("I see objects: %d\n", RobotStates::is_Static_Cam_Detecting);
+    // printf("I see objects: %d\n", RobotStates::is_Static_Cam_Detecting);
     // vision_object_s_t flag = buttomCam->get_by_code(0, flagCode);
     // printf("code test: %d \n", flag.angle);
     // targetVector().clear();

@@ -23,12 +23,14 @@ class RobotStates {
         const static int BASE_RIGHT_FRONT = 1;
         const static int BASE_LEFT_BACK = 20;
         const static int BASE_LEFT_FRONT = 11;
+        const static int MAX_AUTO_CHOICE = 6; //all the options including no auto
 
         static double targetY;
         static double targetFlag_X;
         static double targetFlag_Y;
         static double hortizontal_correction;
         static double vertical_correction;
+        static double potTarget;
         
         //in game states
         enum FieldColor {
@@ -42,6 +44,7 @@ class RobotStates {
             FOUR_FLAGS,
             THREE_FLAGS_PLAT,
             THREE_FLAGS_CAP,
+            BACK_TILE,
             THREE_FLAGS_SKILLS
         };
 
@@ -61,6 +64,8 @@ class RobotStates {
         static bool is_assistant_Shooting;
         static bool is_assistant_Shooting_back;
         static bool is_oneShot;
+        static bool is_pot;
+        static bool is_at_pot;
     private: 
         static RobotStates* instance;
 };

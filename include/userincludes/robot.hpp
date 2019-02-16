@@ -20,6 +20,7 @@ class Robot {
         static void doubleShot(void * param);
         static void autoAim_Task(void * param);
         static void alignTheBot(void * param);
+        static void hoodWithPot(void * param);
         static void alignTheHood(void * param);
         static void assistShooting(void * param);
         // static void assistShooting_back(void * param);
@@ -31,14 +32,11 @@ class Robot {
         static okapi::Motor * rightFront_Motor;
         static okapi::Motor * rightBack_Motor;
 
-        // static okapi::AsyncMotionProfileController _turnController;
-        // static okapi::AsyncMotionProfileController _profileController;
-        // static okapi::AsyncPosIntegratedController _hoodController;
-
         static okapi::AsyncMotionProfileController * turnController;
         static okapi::AsyncMotionProfileController * profileController;
         static okapi::AsyncMotionProfileController * mediumSpeedController;
         static okapi::AsyncPosIntegratedController * hoodController;
+        static okapi::AsyncPosPIDController * potController;
         // static okapi::AsyncPosPIDController * cam_hood_Controller;
 
         void rest_before_driver();

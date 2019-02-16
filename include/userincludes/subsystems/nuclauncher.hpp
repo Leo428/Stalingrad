@@ -20,6 +20,7 @@ class NucLauncher {
         static void autoAim_Task(void * param);
         static okapi::Motor * hood_Motor;
         static okapi::Motor * flywheel_Motor;
+        static ADIPotentiometer * pot;
         // static double hoodPID_Output;
         // static double target_Y;
 

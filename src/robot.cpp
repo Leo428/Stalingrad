@@ -15,6 +15,7 @@ okapi::AsyncMotionProfileController * Robot::profileController = 0;
 
 okapi::AsyncPosIntegratedController * Robot::hoodController = 0;
 // okapi::AsyncPosPIDController * Robot::cam_hood_Controller = 0;
+okapi::AsyncPosPIDController * Robot::potController = nullptr;
 
 okapi::ChassisControllerIntegrated* Robot::base = 0;
 
@@ -35,6 +36,8 @@ Robot::Robot() {
     Robot::base = &drive;
 
     static auto _hoodController = AsyncControllerFactory::posIntegrated(*(nuc->hood_Motor), 100);
+    //P = 1000
+    // static auto _potController = AsyncControllerFactory::posPID(*nuc->hood_Motor, *nuc->pot, 0.05, 0, 0);
     static auto _turnController = AsyncControllerFactory::motionProfile(
         in2meter(20.0),  // Maximum linear velocity of the Chassis in m/s 20
         in2meter(30.0),  // Maximum linear acceleration of the Chassis in m/s/s 30
@@ -50,9 +53,9 @@ Robot::Robot() {
     );
 
     static auto _mediumSpeedController = AsyncControllerFactory::motionProfile(
-        in2meter(20.0),  // Maximum linear velocity of the Chassis in m/s 40
-        in2meter(30.0),  // Maximum linear acceleration of the Chassis in m/s/s 60
-        in2meter(300.0), // Maximum linear jerk of the Chassis in m/s/s/s
+        in2meter(30.0),  // Maximum linear velocity of the Chassis in m/s 40
+        in2meter(45.0),  // Maximum linear acceleration of the Chassis in m/s/s 60
+        in2meter(450.0), // Maximum linear jerk of the Chassis in m/s/s/s
         *base // Chassis Controller
     );
 
@@ -65,6 +68,7 @@ Robot::Robot() {
     profileController = &_profileController;
     mediumSpeedController = &_mediumSpeedController;
     hoodController = &_hoodController;
+    // potController = &_potController;
     // cam_hood_Controller = &_cam_hood_Controller;
 }
 
@@ -176,6 +180,34 @@ void Robot::alignTheBot(void * param) {
     }
 }
 
+void Robot::hoodWithPot(void * param) {
+    double err;
+    int baseSpeed = 10; 
+    int output = 0;
+    while(true) {
+        if(RobotStates::is_pot) {
+            err = Robot::nuc->pot->get_value_calibrated() * 1.0 - RobotStates::potTarget;
+            if(!RobotStates::is_at_pot) {
+                // if(RobotStates::potTarget < 100) {
+                //     output = -15;
+                // } else {
+                //     output = (err > 0) ? (baseSpeed + 0.5 * err) : (-baseSpeed + 0.5 * err);
+                // }
+                output = -15;
+                if(fabs(err) > 10) {
+                    Robot::nuc->hood_Motor->move(output);
+                } else {
+                    Robot::nuc->hood_Motor->move(0);
+                    RobotStates::is_at_pot = true;
+                    RobotStates::is_pot = false;
+                }
+                printf("hood output: %d \n", output);
+            }
+        }
+        pros::delay(10);
+    }
+}
+
 void Robot::alignTheHood(void * param) {
     double err;
     int baseSpeed = 10; 
@@ -219,18 +251,21 @@ void Robot::toggle_AssistShooting() {
 }
 
 void Robot::toggle_AssistShooting_back() {
-    if(RobotStates::is_assistant_Shooting) { //disrupt
-        RobotStates::is_assistant_Shooting = false;
-        Robot::hoodController->flipDisable(true);
-        RobotStates::is_Collecting_Ball = false;
-        RobotStates::is_Shooting_Ball = false;
-        Robot::nuc->hood_Motor->setReversed(false);
-        RobotStates::is_assistant_Shooting_back = false;
-    } else {
-        RobotStates::is_assistant_Shooting = true; //enable
-        RobotStates::is_assistant_Shooting_back = true;
-    }
-    pros::delay(500);
+    // if(RobotStates::is_assistant_Shooting) { //disrupt
+    //     RobotStates::is_assistant_Shooting = false;
+    //     Robot::hoodController->flipDisable(true);
+    //     RobotStates::is_Collecting_Ball = false;
+    //     RobotStates::is_Shooting_Ball = false;
+    //     Robot::nuc->hood_Motor->setReversed(false);
+    //     RobotStates::is_assistant_Shooting_back = false;
+    // } else {
+    //     RobotStates::is_assistant_Shooting = true; //enable
+    //     RobotStates::is_assistant_Shooting_back = true;
+    // }
+    
+    RobotStates::is_at_pot = false;
+    RobotStates::is_pot = true;
+    // pros::delay(200);
 }
 
 void Robot::assistShooting(void * param) {
@@ -267,38 +302,24 @@ void Robot::assistShooting(void * param) {
             Robot::hoodController->tarePosition();
             Robot::hoodController->flipDisable(false);
             
-            if(RobotStates::is_assistant_Shooting_back) {
-                Robot::hoodController->setTarget(70); //60 //40
-            } else {
-                Robot::hoodController->setTarget(0); //60 //40
-            }
-            // Robot::hoodController->setTarget(0); //60 //40
+            // if(RobotStates::is_assistant_Shooting_back) {
+            //     Robot::hoodController->setTarget(70); //60 //40
+            // } else {
+            //     Robot::hoodController->setTarget(0); //60 //40
+            // }
+            Robot::hoodController->setTarget(0); //60 //40
             Robot::hoodController->waitUntilSettled();
 
-            //TODO: the new double shot, need to be extremely fast!
+            //the new double shot, extremely fast!
             RobotStates::is_Shooting_Ball = true;
-            delay(200); //150
-            if(RobotStates::is_assistant_Shooting_back) {
-                Robot::hoodController->setTarget(80); //60 //40
-            } else {
-                Robot::hoodController->setTarget(100); //110 //60 //40
-            }
-            // Robot::hoodController->setTarget(110); //130
-            // RobotStates::is_Shooting_Ball = true;
-
-            // pros::delay(100);
-            // RobotStates::is_Shooting_Ball = false;
-
-            // RobotStates::is_Collecting_Ball = true;
-            // pros::delay(250);
-            // RobotStates::is_Collecting_Ball = false;
-
-            // Robot::hoodController->setTarget(130); //130
+            delay(150); //150 //200 works well 
+            // if(RobotStates::is_assistant_Shooting_back) {
+            //     Robot::hoodController->setTarget(80); //60 //40
+            // } else {
+                
+            // }
+            Robot::hoodController->setTarget(90); //100 works before adding pot
             Robot::hoodController->waitUntilSettled();
-            // RobotStates::is_Shooting_Ball = true;
-            // pros::delay(200);
-            
-            
             Robot::hoodController->flipDisable(true);
             
             Robot::nuc->hood_Motor->setReversed(false);
@@ -309,31 +330,6 @@ void Robot::assistShooting(void * param) {
             pros::delay(500);
             Robot::nuc->hoodStop();
             RobotStates::is_assistant_Shooting = false;
-
-            //previous version: slow 
-            //TODO: change it to this at Crespi
-            // RobotStates::is_Shooting_Ball = true;
-            // pros::delay(100);
-            // RobotStates::is_Shooting_Ball = false;
-            // // RobotStates::is_Collecting_Ball = true;
-            // pros::delay(250);
-            // // RobotStates::is_Collecting_Ball = false;
-
-            // Robot::hoodController->setTarget(130); //130
-            // Robot::hoodController->waitUntilSettled();
-            // RobotStates::is_Shooting_Ball = true;
-            // pros::delay(200);
-            // RobotStates::is_Shooting_Ball = false;
-            
-            // Robot::hoodController->flipDisable(true);
-            
-            // Robot::nuc->hood_Motor->setReversed(false);
-
-            // // delay(500);
-            // Robot::nuc->hoodDown();
-            // pros::delay(500);
-            // Robot::nuc->hoodStop();
-            // RobotStates::is_assistant_Shooting = false;
         }
         pros::delay(200);
     }
@@ -448,6 +444,8 @@ void Robot::rest_before_driver() {
 
     RobotStates::hortizontal_correction = 0.0;
 
+    Robot::base->setBrakeMode(AbstractMotor::brakeMode::coast);
+    
     Robot::hoodController->flipDisable(true);
     Robot::hoodController->reset();
 

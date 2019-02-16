@@ -23,13 +23,15 @@ bool RobotStates::is_assistant_Shooting_back;
 bool RobotStates::is_autoHooding;
 bool RobotStates::is_Hooded;
 bool RobotStates::is_oneShot;
+bool RobotStates::is_pot;
+bool RobotStates::is_at_pot;
 
 double RobotStates::targetY = 0.0;
 double RobotStates::targetFlag_Y = 0.0;
 double RobotStates::targetFlag_X = 0.0;
 double RobotStates::hortizontal_correction = 0.0;
 double RobotStates::vertical_correction = 0.0;
-
+double RobotStates::potTarget = 0.0;
 
 RobotStates::RobotStates() {
     

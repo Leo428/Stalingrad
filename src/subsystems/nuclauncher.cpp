@@ -6,9 +6,11 @@
 
 okapi::Motor * NucLauncher::hood_Motor = 0;
 okapi::Motor * NucLauncher::flywheel_Motor = 0;
+ADIPotentiometer * NucLauncher::pot = nullptr;
 
 NucLauncher::NucLauncher(){
     initMotors();
+    pot = new ADIPotentiometer('h');
 }
 
 void NucLauncher::initMotors() {
@@ -16,6 +18,7 @@ void NucLauncher::initMotors() {
     hood_Motor = new okapi::Motor(RobotStates::HOOD_PORT);
     flywheel_Motor->setGearing(AbstractMotor::gearset::blue);
     hood_Motor->setGearing(AbstractMotor::gearset::green);
+    // hood_Motor->setBrakeMode(AbstractMotor::brakeMode::hold);
     // hood_Motor->setReversed(true);
 }
 

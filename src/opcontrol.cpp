@@ -19,8 +19,6 @@
 
 okapi::Controller master;
 // okapi::ControllerButton * shootButton = new ControllerButton(okapi::ControllerDigital::R2);
-bool vibrating = false;
-static double hoodDrive = 0;
 
 void showRPM(void* param) {
 	auto rpmStr = std::to_string(Robot::nuc->flywheel_Motor->getActualVelocity());
@@ -31,38 +29,50 @@ void showRPM(void* param) {
 	}
 }
 
+void testHood(void * param) {
+	while(true) {
+		if(RobotStates::is_assistant_Shooting) {
+			Robot::collector->ballCollector->moveVelocity(-100);
+			delay(200);
+			Robot::nuc->hood_Motor->moveVelocity(-100);
+			
+			delay(500);
+			Robot::nuc->hood_Motor->moveVelocity(0);
+			delay(1000);
+			Robot::collector->ballCollector->moveVelocity(0);
+			RobotStates::is_assistant_Shooting = false;
+		}
+		delay(50);
+	}
+}
+
 void opcontrol() {
 	Robot::getInstance()->rest_before_driver();
-	RobotStates::is_Flywheel_Running = true;
+	RobotStates::is_Flywheel_Running = true; //TODO: enable for comp
 
-	
 	Task flywheelTask(Robot::operate_Flywheel);
 	Task visionTask(Robot::testTracking);
 	Task collectorTask(Robot::operate_BallCollector);
-	// Task velocityCollectorTask(Robot::operate_BallCollector_doubleShot);
-	// Task oneShotTask(oneShot);
-
-	// Task aimTask(Robot::autoAim_Task);
 	Task assistShooting(Robot::assistShooting);
 	Task alignTask(Robot::alignTheBot);
 
 	Task displayRPM(showRPM);
+	// Task movePot(Robot::hoodWithPot);
+	// Task coolDoubleShot(testHood);
 
 	// auto rpmStr = std::to_string(Robot::nuc->flywheel_Motor->getActualVelocity());
 	// Robot::hoodController->setMaxVelocity(200);
 
-	
 	// std::shared_ptr<ControllerInput<double>> iinput = std::make_shared<Camera>();
 	// std::shared_ptr<ControllerOutput<double>> ioutput = std::make_shared<okapi::Motor>(6);
 	// std::shared_ptr<ControllerOutput<double>> ioutput (Robot::nuc->hood_Motor);
-	
-	while (true) {
-		Robot::base->tank(master.getAnalog(okapi::ControllerAnalog::leftY), master.getAnalog(okapi::ControllerAnalog::rightY), 0.2);
-		// MotorGroup leftDrive({11,20});
-		// MotorGroup rightDrive({-1, -10});
 
-		// leftDrive.moveVelocity((int) (200.0 * master.getAnalog(okapi::ControllerAnalog::leftY)));
-		// rightDrive.moveVelocity((int) (200.0 * master.getAnalog(okapi::ControllerAnalog::rightY)));
+	// RobotStates::potTarget = 150;
+	while (true) {
+		printf("pot new value: %d \n", Robot::nuc->pot->get_value_calibrated());
+
+		Robot::base->tank(master.getAnalog(okapi::ControllerAnalog::leftY), master.getAnalog(okapi::ControllerAnalog::rightY), 0.2);
+
 		if(!RobotStates::is_assistant_Shooting) {
 			if(master.getDigital(okapi::ControllerDigital::R1)) {
 				RobotStates::is_Shooting_Ball = false;
@@ -71,10 +81,11 @@ void opcontrol() {
 			} else if (master.getDigital(okapi::ControllerDigital::R2)){
 				RobotStates::is_Collecting_Ball = false;
 				RobotStates::is_Shooting_Ball = true;
+				// Robot::collector->shootBall();
 			} else {
-				// Robot::collector->stopCollector();
 				RobotStates::is_Collecting_Ball = false;
 				RobotStates::is_Shooting_Ball = false;
+				// Robot::collector->stopCollector();
 			}
 		}
 
@@ -90,7 +101,7 @@ void opcontrol() {
 			// flipperController.flipDisable(false);
 		}
 
-		if(!RobotStates::is_assistant_Shooting) {
+		if(!RobotStates::is_assistant_Shooting && !RobotStates::is_pot) {
 			if(master.getDigital(okapi::ControllerDigital::up)) {
 				Robot::nuc->hoodUp();
 			} else if (master.getDigital(okapi::ControllerDigital::down)) {
@@ -109,7 +120,7 @@ void opcontrol() {
 			// Robot::cam->selectTarget();
 			// Robot::nuc->toggleAutoAim();
 		} else if (master.getDigital(okapi::ControllerDigital::B)) {
-			Robot::getInstance()->toggle_AssistShooting_back();
+			// Robot::getInstance()->toggle_AssistShooting_back();
 		}
 
 		// if(master.getDigital(okapi::ControllerDigital::B)) {

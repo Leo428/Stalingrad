@@ -9,14 +9,17 @@
  */
 
 void initialize() {
-    BigScreenTV* bigTV = new BigScreenTV();
-    bigTV->createUIComponents();
-    
     RobotStates * robotStates = RobotStates::getInstance();
     Robot * robot = Robot::getInstance();
     printf("initializing! \n");
+
+    BigScreenTV* bigTV = new BigScreenTV();
+    bigTV->createUIComponents();
     pros::Task refresh(bigTV->updateScreen);
-    pros::delay(200);
+    delay(200);
+    Robot::nuc->pot->calibrate();
+	delay(1000);
+    
     //each controller can only have 3 paths at a time so sad
     Robot::profileController->generatePath({Point{0_ft, 0_ft, 0_deg}, Point{2.75_ft, 0_ft, 0_deg}}, "A");
     // 4 to 0.65

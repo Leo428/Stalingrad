@@ -7,11 +7,11 @@ BigScreenTV::BigScreenTV(){
 // RobotStates::FieldColor BigScreenTV::fieldColor = RobotStates::FieldColor::UNKNOWN;
 lv_obj_t* BigScreenTV::label_side_choice = 0;
 lv_obj_t * BigScreenTV::label_static_cam_connection = 0;
+lv_obj_t * BigScreenTV::ddl1 = 0;
 
 void BigScreenTV::createUIComponents(){
 	lv_theme_t* theme = lv_theme_alien_init(0, &lv_font_dejavu_20);
 	lv_theme_set_current(theme);
-
 	lv_test_theme_1(theme);
 };
 
@@ -65,12 +65,23 @@ void BigScreenTV::create_tab1(lv_obj_t * tab_view)
 	lv_label_set_text(label_blue_side, "BLUE");
 	lv_obj_align(label_blue_side, btn_blue_side, LV_ALIGN_CENTER, 0, 0);
 
-	lv_obj_t * ddl1 = lv_ddlist_create(tab_view, NULL);
+	ddl1 = lv_ddlist_create(tab_view, NULL);
 	lv_obj_align(ddl1, tab_view, LV_ALIGN_OUT_TOP_LEFT, 20, 0);
-	lv_ddlist_set_options(ddl1, "No Auto\n Four Flags\n3 Flags PLat\n 3 Flags Cap\n Skills");
+	lv_ddlist_set_options(ddl1, "No Auto\n Four Flags\n 3 Flags PLat\n 3 Flags Cap\n BackTile\n Skills");
 	lv_ddlist_set_action(ddl1, selAuto);
+	lv_ddlist_set_sb_mode(ddl1, lv_sb_mode_t::LV_SB_MODE_AUTO);
+	// lv_ddlist_set_draw_arrow(ddl1, true)
 	// // lv_ddlist_open(ddl1, true);
 	// // lv_ddlist_set_selected(ddl1, 0);
+
+	lv_obj_t * btn_next_option = lv_btn_create(tab_view, btn_red_side);
+	lv_obj_align(btn_next_option, ddl1, LV_ALIGN_IN_RIGHT_MID, 100, 0);
+	lv_obj_set_free_num(btn_next_option, 3);
+	lv_btn_set_action(btn_next_option, LV_BTN_ACTION_CLICK ,selNextAuto);
+
+	lv_obj_t * label_next_auto = lv_label_create(tab_view, NULL);
+	lv_label_set_text(label_next_auto, "Next");
+	lv_obj_align(label_next_auto, btn_next_option, LV_ALIGN_CENTER, 0, 0);
 }
 
 lv_res_t BigScreenTV::selAuto(lv_obj_t * list) {
@@ -87,8 +98,12 @@ lv_res_t BigScreenTV::selAuto(lv_obj_t * list) {
 			RobotStates::autoChoice = RobotStates::AutoChoice::THREE_FLAGS_CAP;
 			break;
 		case (4):
+			RobotStates::autoChoice = RobotStates::AutoChoice::BACK_TILE;
+			break;
+		case (5):
 			RobotStates::autoChoice = RobotStates::AutoChoice::THREE_FLAGS_SKILLS;
 			break;
+
 		default:
 			RobotStates::autoChoice = RobotStates::AutoChoice::NO_AUTO;
 			break;
@@ -116,6 +131,18 @@ lv_res_t BigScreenTV::selSide(lv_obj_t * btn) {
 	return LV_RES_OK;
 }
 
+lv_res_t BigScreenTV::selNextAuto(lv_obj_t * btn) {
+	printf("auto enum before: %d \n", RobotStates::autoChoice);
+	if(RobotStates::autoChoice < RobotStates::MAX_AUTO_CHOICE - 1) {
+		lv_ddlist_set_selected(ddl1, RobotStates::autoChoice + 1);
+	} else {
+		lv_ddlist_set_selected(ddl1, 0);
+	}
+	selAuto(ddl1);
+	printf("auto enum after: %d \n", RobotStates::autoChoice);
+	return LV_RES_OK;
+}
+
 void BigScreenTV::updateScreen(void* param) {
 	while(true) {
 		//update UIs
@@ -137,6 +164,6 @@ void BigScreenTV::updateScreen(void* param) {
 			lv_label_set_text(label_static_cam_connection, "Nothing!");
 		}
 
-		pros::delay(20);
+		pros::delay(100); //20
 	}
 }
