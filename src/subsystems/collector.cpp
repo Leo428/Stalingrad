@@ -33,12 +33,14 @@ void Collector::stopCollector() {
 }
 
 void Collector::capUp() {
-    capCollector->move(-127); //127
+    capCollector->move(-127); //127 for descorer
+    // capCollector->move(127); 
     // capCollector->moveVoltage(1000);
 }
 
 void Collector::capDown() {
-    capCollector->move(127); //-127
+    capCollector->move(127); //-127 for descorer
+    // capCollector->move(-127);
     // capCollector->moveVoltage(-1000);
 }
 

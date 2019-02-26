@@ -11,6 +11,7 @@ Camera::Camera() {
     topCam = new Vision(RobotStates::CAMERA_PORT, E_VISION_ZERO_TOPLEFT);
     buttomCam->clear_led();
     topCam->clear_led();
+    buttomCam->set_exposure(75);
     // flagCode = buttomCam->create_color_code(3,1,0,0,0);
 }
 
@@ -95,7 +96,9 @@ void Camera::updateSensor() {
     // topCam->read_by_size(0, 6, hoodFlags);
     // sortByHeight();
     // filterTarget();
+    // printf("before %d \n", sizeof(this->allFlags)/(sizeof(this->allFlags[0])));
     hortizontalSort();
+    // printf("after %d \n", targetVector->size());
     sortByCenter();
     // for(vision_object_s_t obj : this->allFlags)
     // {
@@ -132,10 +135,10 @@ void Camera::updateSensor() {
     //     // RobotStates::targetFlag_X = 0;
     //     // this->targetY = 0;
     // }
-    // for(vision_object_s_t obj : *targetVector)
-    // // for(vision_object_s_t obj : this->targetFlags)
-    // {
-    //     // printf("flag color: %d; width: %d; height: %d \n", obj.signature, obj.width, obj.height);
+    for(vision_object_s_t obj : *targetVector)
+    // // // for(vision_object_s_t obj : this->targetFlags)
+    {
+        printf("flag color: %d; x: %d; y: %d \n", obj.signature, obj.x_middle_coord, obj.y_middle_coord);
     //     if (obj.signature == 1) {
     //         printf("flag color: %s; width: %d; height: %d; x: %d; y: %d \n", "red", obj.width, obj.height, obj.x_middle_coord, obj.y_middle_coord);
             
@@ -143,8 +146,13 @@ void Camera::updateSensor() {
     //     if (obj.signature == 2) {
     //         printf("flag color: %s; width: %d; height: %d; x: %d; y: %d \n", "blue", obj.width, obj.height, obj.x_middle_coord, obj.y_middle_coord);
     //     }
-    // }
-    // printf("-------------------------------------------------------- \n");
+    }
+    // printf("flag color: %d; x: %d; y: %d \n", targetVector->at(0).signature, targetVector->at(0).x_middle_coord, targetVector->at(0).y_middle_coord);
+    printf("%d \n", buttomCam->get_exposure());
+    printf("%d \n", buttomCam->get_object_count());
+    printf("%d \n", targetVector->size());
+    printf("%f \n", RobotStates::targetFlag_X);
+    printf("-------------------------------------------------------- \n");
     
     // printf("where it is now: %f \n", RobotStates::targetFlag_Y);
     // printf("target at: %f \n", RobotStates::targetY);

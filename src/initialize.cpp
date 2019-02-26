@@ -24,6 +24,7 @@ void initialize() {
     Robot::profileController->generatePath({Point{0_ft, 0_ft, 0_deg}, Point{2.75_ft, 0_ft, 0_deg}}, "A");
     // 4 to 0.65
     Robot::profileController->generatePath({Point{4_ft, 0_ft, 0_deg}, Point{0.7_ft, 0_ft, 0_deg}}, "B");
+    //0.8181 
     Robot::turnController->generatePath({Point{0_ft, 0_ft, 0_deg}, Point{0.8181_ft, 0_ft, 0_deg}}, "90deg");
     //0.65 a bit too much 
     Robot::profileController->generatePath({Point{0_ft, 0_ft, 0_deg}, Point{0.575_ft, 0_ft, 0_deg}}, "short"); //0.25 //0.35 

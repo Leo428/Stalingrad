@@ -54,7 +54,7 @@ void opcontrol() {
 	Task visionTask(Robot::testTracking);
 	Task collectorTask(Robot::operate_BallCollector);
 	Task assistShooting(Robot::assistShooting);
-	Task alignTask(Robot::alignTheBot);
+	// Task alignTask(Robot::alignTheBot);
 
 	Task displayRPM(showRPM);
 	// Task movePot(Robot::hoodWithPot);
@@ -69,7 +69,7 @@ void opcontrol() {
 
 	// RobotStates::potTarget = 150;
 	while (true) {
-		printf("pot new value: %d \n", Robot::nuc->pot->get_value_calibrated());
+		// printf("pot new value: %d \n", Robot::nuc->pot->get_value_calibrated());
 
 		Robot::base->tank(master.getAnalog(okapi::ControllerAnalog::leftY), master.getAnalog(okapi::ControllerAnalog::rightY), 0.2);
 
