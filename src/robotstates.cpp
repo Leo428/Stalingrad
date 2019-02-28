@@ -26,6 +26,8 @@ bool RobotStates::is_oneShot;
 bool RobotStates::is_pot;
 bool RobotStates::is_at_pot;
 
+int RobotStates::flywheelRPM = 0;
+
 double RobotStates::targetY = 0.0;
 double RobotStates::targetFlag_Y = 0.0;
 double RobotStates::targetFlag_X = 0.0;

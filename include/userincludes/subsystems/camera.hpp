@@ -13,10 +13,11 @@ class Camera : public ControllerInput<double> {
         static Vision * topCam;
         
         void updateSensor();
-        void selectTarget();
+        void selectTarget(); 
 
         //vars
-        
+        vision_color_code_t flagCode;
+
         static std::vector<vision_object_s_t> * targetVector;
         static std::vector<vision_object_s_t> * hoodVector;
 
@@ -33,8 +34,6 @@ class Camera : public ControllerInput<double> {
         vision_object_s_t hoodFlags[6]; 
         vision_object_s_t allFlags[6];
         vision_object_s_t targetFlags[3];
-        // vision_color_code_t flagCode;
-        
 };
 
 #endif

@@ -58,10 +58,10 @@ Robot::Robot() {
         *base // Chassis Controller
     );
 
-    static auto _flywheelVelController = AsyncControllerFactory::velPID(
-        *Robot::nuc->flywheel_Motor,
-        0.001, 0.0, 0.0, 0.0, 100.0
-    );
+    // static auto _flywheelVelController = AsyncControllerFactory::velPID(
+    //     *Robot::nuc->flywheel_Motor,
+    //     0.001, 0.0, 0.0, 0.0, 100.0
+    // );
     // std::shared_ptr<ControllerInput<double>> iinput = std::make_shared<Camera>();
     // std::shared_ptr<ControllerOutput<double>> ioutput (Robot::nuc->hood_Motor);
     // auto hoodTime = TimeUtilFactory::withSettledUtilParams(5, 5, 100_ms);
@@ -71,13 +71,13 @@ Robot::Robot() {
     profileController = &_profileController;
     mediumSpeedController = &_mediumSpeedController;
     hoodController = &_hoodController;
-    flywheelVelController = &_flywheelVelController;
+    // flywheelVelController = &_flywheelVelController;
     // potController = &_potController;
     // cam_hood_Controller = &_cam_hood_Controller;
 }
 
 Robot* Robot::getInstance() {
-    if(instance == 0) {
+    if(instance == 0) {// RobotStates::potTarget = 250;
         instance = new Robot();
     }
     return instance;
@@ -111,19 +111,31 @@ void Robot::operate_BallCollector(void * param) {
     }
 }
 
-void Robot::operate_BallCollector_doubleShot(void * param) {
-    // while(true) {
-    //     if(RobotStates::is_assistant_Shooting) {
-    //         if(RobotStates::is_Shooting_Ball) {
-                
-    //         } else if(RobotStates::is_Collecting_Ball) {
-    //             Robot::collector->collectBalls();
-    //         } else {
-    //             Robot::collector->stopCollector();
-    //         }
-    //     }
-    //     pros::delay(20);
-    // }
+void Robot::bangbangControl(void * param) {
+    while(true) {
+        if(Robot::nuc->flywheel_Motor->getActualVelocity() < RobotStates::flywheelRPM) {
+            Robot::nuc->flywheel_Motor->move(127);
+        } else {
+            Robot::nuc->flywheel_Motor->move(0);
+        }
+        delay(10);
+    }
+}
+
+void Robot::tbhControl(void * param) {
+    double err;
+    int output;
+    while(true) {
+        err = RobotStates::flywheelRPM * 1.0 - Robot::nuc->flywheel_Motor->getActualVelocity();
+        output = output + 0.05 * err; //0.25 sounds good
+        if(output > 127) {
+            output = 127;
+        } else if (output < 0) {
+            output = 0;
+        }
+        Robot::nuc->flywheel_Motor->move(output);
+        delay(10);
+    }
 }
 
 void Robot::doubleShot(void * param) {
@@ -153,7 +165,7 @@ void Robot::testTracking(void* param) {
 
 void Robot::alignTheBot(void * param) {
     double err;
-    int baseSpeed = 10; 
+    int baseSpeed = 10; //10
     while(true) {
         if(RobotStates::is_autoAligning) {
             if(RobotStates::targetFlag_X != 0) {
@@ -163,7 +175,7 @@ void Robot::alignTheBot(void * param) {
             }
             
             if(!RobotStates::is_Aligned) {
-                int output = (err > 0) ? (baseSpeed + 0.5 * err) : (-baseSpeed + 0.5 * err);
+                int output = (err > 0) ? (baseSpeed + 0.35 * err) : (-baseSpeed + 0.35 * err);
                 if(fabs(err) > 5) {
                     leftFront_Motor->move(-output);
                     leftBack_Motor->move(-output);
@@ -186,7 +198,6 @@ void Robot::alignTheBot(void * param) {
 
 void Robot::hoodWithPot(void * param) {
     double err;
-    int baseSpeed = 10; 
     int output = 0;
     while(true) {
         if(RobotStates::is_pot) {
@@ -197,15 +208,16 @@ void Robot::hoodWithPot(void * param) {
                 // } else {
                 //     output = (err > 0) ? (baseSpeed + 0.5 * err) : (-baseSpeed + 0.5 * err);
                 // }
-                output = -15;
+                output = -20; //-15
                 if(fabs(err) > 10) {
                     Robot::nuc->hood_Motor->move(output);
                 } else {
+                    output = 0;
                     Robot::nuc->hood_Motor->move(0);
                     RobotStates::is_at_pot = true;
                     RobotStates::is_pot = false;
                 }
-                printf("hood output: %d \n", output);
+                // printf("hood output: %d \n", output);
             }
         }
         pros::delay(10);
@@ -499,8 +511,8 @@ void Robot::rest_before_driver() {
     Robot::hoodController->flipDisable(true);
     Robot::hoodController->reset();
 
-    Robot::flywheelVelController->flipDisable(true);
-    Robot::flywheelVelController->reset();
+    // Robot::flywheelVelController->flipDisable(true);
+    // Robot::flywheelVelController->reset();
 
     Robot::nuc->hood_Motor->setReversed(false);
     Robot::rightFront_Motor->setReversed(true);

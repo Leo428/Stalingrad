@@ -11,7 +11,8 @@ Camera::Camera() {
     topCam = new Vision(RobotStates::CAMERA_PORT, E_VISION_ZERO_TOPLEFT);
     buttomCam->clear_led();
     topCam->clear_led();
-    buttomCam->set_exposure(75);
+    buttomCam->set_exposure(60);
+    //1 is for blue; 2 is for red; 3 is for green
     // flagCode = buttomCam->create_color_code(3,1,0,0,0);
 }
 
@@ -92,7 +93,17 @@ void Camera::updateSensor() {
     // vision_object_s_t flag = buttomCam->get_by_code(0, flagCode);
     // printf("code test: %d \n", flag.angle);
     // targetVector().clear();
+
     buttomCam->read_by_size(0, 6, this->allFlags);
+    //TODO: enable for color code 
+    // if(RobotStates::autoChoice == RobotStates::AutoChoice::BACK_TILE || 
+    //     RobotStates::autoChoice == RobotStates::AutoChoice::NO_AUTO) 
+    // {
+    //     buttomCam->read_by_size(0, 6, this->allFlags);
+    // } else {
+    //     buttomCam->read_by_code(0, flagCode, 6, this->allFlags);
+    // }
+    
     // topCam->read_by_size(0, 6, hoodFlags);
     // sortByHeight();
     // filterTarget();

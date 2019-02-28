@@ -28,16 +28,16 @@ void prepareToDrive() {
     Robot::rightFront_Motor->setReversed(true);
     Robot::rightBack_Motor->setReversed(true);
 }
+void capDownBit(void * param) {
+    Robot::collector->capDown();
+    delay(400);
+    Robot::collector->capStop();
+}
 
-void bangbang(void * param) {
-    while(true) {
-        if(Robot::nuc->flywheel_Motor->getActualVelocity() < 500.0) {
-            Robot::nuc->flywheel_Motor->move(127);
-        } else {
-            Robot::nuc->flywheel_Motor->move(0);
-        }
-        delay(10);
-    }
+void capUpBit(void * param) {
+    Robot::collector->capUp();
+    delay(1000);
+    Robot::collector->capStop();
 }
 
 void knockBalls(void * param) {
@@ -235,14 +235,14 @@ void manyFlagsAuto() {
     
 }
 
-void threeFlags_plat() {
+void autoForState() {
     Robot::nuc->hood_Motor->setReversed(true);
     //enable flywheel and collector control tasks
     Task auto_flyWheelTask(Robot::operate_Flywheel);
     Task auto_collectorTask(Robot::operate_BallCollector);
     Task auto_visionTask(Robot::testTracking);
     Task auto_alignTask(Robot::alignTheBot);
-    Task auto_doubleShot(Robot::assistShooting); //added for double shot
+    Task auto_doubleShot(Robot::assistShooting_withVision); //added for double shot
 
     RobotStates::is_Flywheel_Running = true;
     //4ft //before chino: 3.8 
@@ -255,6 +255,155 @@ void threeFlags_plat() {
     // Robot::profileController->generatePath({Point{4_ft, 0_ft, 0_deg}, Point{0.65_ft, 0_ft, 0_deg}}, "B");
     Robot::profileController->setTarget("B", true);
     Robot::profileController->waitUntilSettled();
+    RobotStates::is_Collecting_Ball = false;
+    Robot::profileController->removePath("B");
+    // pros::delay(200);
+
+    prepareToTurn();
+    
+    if(RobotStates::fieldColor == RobotStates::FieldColor::BLUE) {
+        Robot::turnController->setTarget("90deg");
+        RobotStates::hortizontal_correction = -15.0;
+    } else {
+        Robot::turnController->setTarget("90deg", true);
+        RobotStates::hortizontal_correction = 15.0;
+    }
+    Robot::turnController->waitUntilSettled();
+    RobotStates::is_Collecting_Ball = false;
+    
+    prepareToDrive();
+    
+    RobotStates::is_Aligned = false;
+    RobotStates::is_autoAligning = true;
+
+    pros::delay(200);
+    while(!RobotStates::is_Aligned) {
+        pros::delay(50);
+    }
+    RobotStates::hortizontal_correction = 0.0;
+
+    // Robot::profileController->generatePath({Point{0_ft, 0_ft, 0_deg}, Point{0.25_ft, 0_ft, 0_deg}}, "short");
+    Robot::profileController->setTarget("short");
+    Robot::profileController->waitUntilSettled();
+    Robot::profileController->removePath("short");
+
+    Robot::getInstance()->toggle_AssistShooting();
+    delay(500);
+
+    //getting rid of the swereve (3.25, -0.3)
+    //2.75 for low flag
+    Robot::turnController->removePath("90deg");
+    if(RobotStates::fieldColor == RobotStates::FieldColor::BLUE) {
+        Robot::profileController->generatePath({Point{0_ft, 0_ft, 0_deg}, Point{2.65_ft, -0.25_ft, 0_deg}}, "low");
+    } else {
+        Robot::profileController->generatePath({Point{0_ft, 0_ft, 0_deg}, Point{2.65_ft, 0.25_ft, 0_deg}}, "low");
+    }
+    // Robot::profileController->generatePath({Point{0_ft, 0_ft, 0_deg}, Point{2.65_ft, 0_ft, 0_deg}}, "low");
+    // Robot::hoodController->waitUntilSettled();
+
+    // RobotStates::is_Shooting_Ball = true;
+    // pros::delay(200);
+
+    RobotStates::is_Shooting_Ball = false;
+    RobotStates::is_Collecting_Ball = false;
+    // RobotStates::is_Flywheel_Running = false;
+
+    // Robot::profileController->generatePath({Point{0_ft, 0_ft, 0_deg}, Point{3.25_ft, -0.3_ft, 0_deg}}, "low");
+    Robot::profileController->setTarget("low");
+    Task auto_Knock(knockFlag);
+    
+    //add 1.5 ft to 1.25
+    Robot::profileController->generatePath({Point{0_ft, 0_ft, 0_deg}, Point{2.75_ft, 0_ft, 0_deg}}, "back2mid");
+    Robot::profileController->waitUntilSettled();
+    
+    Robot::profileController->removePath("low");
+    pros::delay(50);
+    
+    // Robot::profileController->generatePath({Point{0_ft, 0_ft, 0_deg}, Point{2_ft, 0.3_ft, 0_deg}}, "back2mid");
+    Robot::profileController->setTarget("back2mid", true);
+    Robot::collector->capUp();
+    Robot::turnController->generatePath({Point{0_ft, 0_ft, 0_deg}, Point{0.425_ft, 0_ft, 0_deg}}, "turn2cap");
+    Robot::profileController->waitUntilSettled();
+    Robot::collector->capStop();
+    Robot::profileController->removePath("back2mid");
+
+    prepareToTurn();
+    // Robot::turnController->generatePath({Point{0_ft, 0_ft, 0_deg}, Point{0.8181_ft, 0_ft, 0_deg}}, "turn2cap");
+    if(RobotStates::fieldColor == RobotStates::FieldColor::BLUE) {
+        Robot::turnController->setTarget("turn2cap", true);
+        RobotStates::hortizontal_correction = 30.0;
+    } else {
+        Robot::turnController->setTarget("turn2cap");
+        RobotStates::hortizontal_correction = -30.0;
+    }
+
+    Robot::turnController->waitUntilSettled();
+    Robot::turnController->removePath("turn2cap");
+    prepareToDrive();
+
+    // RobotStates::is_Aligned = false;
+    // RobotStates::is_autoAligning = true;
+
+    // pros::delay(200);
+    // while(!RobotStates::is_Aligned) {
+    //     pros::delay(50);
+    // }
+    RobotStates::hortizontal_correction = 0.0;
+    RobotStates::is_Shooting_Ball = false;
+    RobotStates::is_Collecting_Ball = true;
+
+    Robot::profileController->generatePath({Point{0_ft, 0_ft, 0_deg}, Point{1.6_ft, 0_ft, 0_deg}}, "2cap");
+    Robot::profileController->setTarget("2cap");
+    Robot::profileController->generatePath({Point{0_ft, 0_ft, 0_deg}, Point{0.75_ft, 0_ft, 0_deg}}, "2shoot");
+    Robot::profileController->waitUntilSettled();
+
+    Robot::collector->capDown();
+    // Robot::profileController->removePath("2cap");
+    delay(750);
+    Robot::collector->capStop();
+
+    Robot::profileController->setTarget("2shoot", true);
+    delay(500);
+    Robot::collector->capUp();
+    Robot::profileController->waitUntilSettled();
+    Robot::profileController->removePath("2shoot");
+
+    delay(500);
+    Robot::collector->capStop();
+    delay(1500);
+
+    RobotStates::is_Shooting_Ball = false;
+    RobotStates::is_Collecting_Ball = false;
+    delay(200);
+
+    Robot::getInstance()->toggle_AssistShooting();
+
+    // Robot::base->forward(200);
+    // delay(1500);
+    // Robot::base->stop();
+}
+
+void threeFlags_twoCaps() { //3 flags, 2 caps, no plat
+    Robot::nuc->hood_Motor->setReversed(true);
+    //enable flywheel and collector control tasks
+    Task auto_flyWheelTask(Robot::operate_Flywheel);
+    Task auto_collectorTask(Robot::operate_BallCollector);
+    Task auto_visionTask(Robot::testTracking);
+    Task auto_alignTask(Robot::alignTheBot);
+    Task auto_doubleShot(Robot::assistShooting_withVision); //added for double shot
+
+    RobotStates::is_Flywheel_Running = true;
+    //4ft //before chino: 3.8 
+    // Robot::profileController->generatePath({Point{0_ft, 0_ft, 0_deg}, Point{2.75_ft, 0_ft, 0_deg}}, "A");
+    Robot::profileController->setTarget("A");
+    RobotStates::is_Collecting_Ball = true;
+    Robot::profileController->waitUntilSettled();
+    Robot::profileController->removePath("A");
+    //4.25 - 0 //4 //3.8
+    // Robot::profileController->generatePath({Point{4_ft, 0_ft, 0_deg}, Point{0.65_ft, 0_ft, 0_deg}}, "B");
+    Robot::profileController->setTarget("B", true);
+    Robot::profileController->waitUntilSettled();
+    RobotStates::is_Collecting_Ball = false;
     Robot::profileController->removePath("B");
     // pros::delay(200);
 
@@ -334,6 +483,7 @@ void threeFlags_plat() {
     //changed from 3 to 2.5 to align perfectly to the plat
     // Robot::profileController->generatePath({Point{0_ft, 0_ft, 0_deg}, Point{2.75_ft, 0_ft, 0_deg}}, "flipCap");
     Robot::turnController->waitUntilSettled();
+    Robot::turnController->removePath("turn2cap");
 
     Robot::collector->capDown();
     delay(200);
@@ -344,13 +494,26 @@ void threeFlags_plat() {
     RobotStates::is_Shooting_Ball = false;
     RobotStates::is_Collecting_Ball = true;
     
-    Robot::turnController->generatePath({Point{0_ft, 0_ft, 0_deg}, Point{1.5_ft, 0_ft, 0_deg}}, "2cap");
+    Robot::turnController->generatePath({Point{0_ft, 0_ft, 0_deg}, Point{0.85_ft, 0_ft, 0_deg}}, "2cap");
     Robot::turnController->setTarget("2cap");
     Task flipGG(flipCap);
+    Robot::turnController->generatePath({Point{0_ft, 0_ft, 0_deg}, Point{0.425_ft, 0_ft, 0_deg}}, "2midFlags");
     Robot::turnController->waitUntilSettled();
-}
+    Robot::turnController->removePath("2cap");
 
-void threeFlags_Cap_LowFlag() {
+    prepareToTurn();
+    if(RobotStates::fieldColor == RobotStates::FieldColor::BLUE) {
+        Robot::turnController->setTarget("2midFlags");
+    } else {
+        Robot::turnController->setTarget("2midFlags", true);
+    }
+    Robot::turnController->waitUntilSettled();
+    prepareToDrive();
+    Robot::turnController->removePath("2midFlags");
+
+    Robot::base->forward(200);
+    delay(1500);
+    Robot::base->stop();
 }
 
 void threeFlags_Only_Plat() {
@@ -360,7 +523,8 @@ void threeFlags_Only_Plat() {
     Task auto_collectorTask(Robot::operate_BallCollector);
     Task auto_visionTask(Robot::testTracking);
     Task auto_alignTask(Robot::alignTheBot);
-    Task auto_doubleShot(Robot::assistShooting); //added for double shot
+    //auto corrects once before the shot
+    Task auto_doubleShot(Robot::assistShooting_withVision); //added for double shot
 
     RobotStates::is_Flywheel_Running = true;
     //4ft //before chino: 3.8 
@@ -373,6 +537,7 @@ void threeFlags_Only_Plat() {
     // Robot::profileController->generatePath({Point{4_ft, 0_ft, 0_deg}, Point{0.65_ft, 0_ft, 0_deg}}, "B");
     Robot::profileController->setTarget("B", true);
     Robot::profileController->waitUntilSettled();
+    RobotStates::is_Collecting_Ball = false;
     Robot::profileController->removePath("B");
     // pros::delay(200);
 
@@ -391,14 +556,14 @@ void threeFlags_Only_Plat() {
     prepareToDrive();
     
     //commented out because its redundant 
-    // RobotStates::is_Aligned = false;
-    // RobotStates::is_autoAligning = true;
+    RobotStates::is_Aligned = false;
+    RobotStates::is_autoAligning = true;
 
-    // pros::delay(200);
-    // while(!RobotStates::is_Aligned) {
-    //     pros::delay(50);
-    // }
-    // RobotStates::hortizontal_correction = 0.0;
+    pros::delay(200);
+    while(!RobotStates::is_Aligned) {
+        pros::delay(50);
+    }
+    RobotStates::hortizontal_correction = 0.0;
 
     
     // if(RobotStates::fieldColor == RobotStates::FieldColor::BLUE) {
@@ -777,48 +942,183 @@ void easyBack() {
 void elimBack() {
     // Robot::nuc->hood_Motor->setReversed(true);
     //enable flywheel and collector control tasks
-    // Task auto_flyWheelTask(Robot::operate_Flywheel);
+    Task auto_flyWheelTask(Robot::operate_Flywheel);
     Task auto_collectorTask(Robot::operate_BallCollector);
     Task auto_visionTask(Robot::testTracking);
     Task auto_alignTask(Robot::alignTheBot);
     Task auto_movePot(Robot::hoodWithPot);
-    Task auto_bang(bangbang);
 
-    // Robot::flywheelVelController->reset();
-    // Robot::flywheelVelController->flipDisable(false);
-    // Robot::flywheelVelController->setTarget(550);
+    Robot::profileController->removePath("B");
+    Robot::profileController->removePath("short");
+    Robot::turnController->removePath("90deg");
+
+    RobotStates::is_Flywheel_Running = true;
+
+    Robot::profileController->removePath("A");
+    
+    Robot::mediumSpeedController->generatePath({Point{0_ft, 0_ft, 0_deg}, Point{2.75_ft, 0_ft, 0_deg}}, "A");
+    RobotStates::is_Collecting_Ball = true;
+    Robot::mediumSpeedController->setTarget("A");
+    Robot::mediumSpeedController->waitUntilSettled();
+    Robot::mediumSpeedController->removePath("A");
+
+    Robot::mediumSpeedController->generatePath({Point{0_ft, 0_ft, 0_deg}, Point{-.45_ft, 0_ft, 0_deg}}, "back2Plat");
+    Robot::mediumSpeedController->setTarget("back2Plat", true);
+    RobotStates::is_Collecting_Ball = false;
+    Robot::mediumSpeedController->waitUntilSettled();
+    Robot::mediumSpeedController->removePath("back2Plat");
+
+    // RobotStates::is_Collecting_Ball = true;
+    prepareToTurn();
+    if(RobotStates::fieldColor == RobotStates::FieldColor::BLUE) {
+        //0.525
+        Robot::turnController->generatePath({Point{0_ft, 0_ft, 0_deg}, Point{0.525_ft, 0_ft, 0_deg}}, "turn2MidFlag");
+    } else {
+        Robot::turnController->generatePath({Point{0_ft, 0_ft, 0_deg}, Point{0.535_ft, 0_ft, 0_deg}}, "turn2MidFlag");
+    }
+    if(RobotStates::fieldColor == RobotStates::FieldColor::BLUE) {
+        Robot::turnController->setTarget("turn2MidFlag");
+    } else {
+        Robot::turnController->setTarget("turn2MidFlag", true);
+    }
+    
+    Robot::turnController->waitUntilSettled();
+    Robot::turnController->removePath("turn2MidFlag");
+    prepareToDrive();
+    // RobotStates::is_Collecting_Ball = false;
+
+    RobotStates::hortizontal_correction = 0.0; //-5
+    RobotStates::is_Aligned = false;
+    RobotStates::is_autoAligning = true;
+    
+    pros::delay(200);
+    while(!RobotStates::is_Aligned) {
+        pros::delay(50);
+    }
+
+    // Robot::nuc->hood_Motor->setBrakeMode(okapi::AbstractMotor::brakeMode::hold);
+    delay(2000);
+
+    Robot::nuc->pot->calibrate();
+    delay(500);
+    RobotStates::potTarget = 70; //50 //70
+    RobotStates::is_pot = true;
+    delay(2000);
+
+    RobotStates::is_Collecting_Ball = false;
+    RobotStates::is_Shooting_Ball = true;
+    delay(100);
+    RobotStates::is_Shooting_Ball = false;
+    
+    delay(200);
+    RobotStates::is_Collecting_Ball = true;
+
+    Robot::nuc->hoodDown();
+    delay(300);
+    Robot::nuc->hoodStop();
+    
+    Robot::nuc->pot->calibrate();
+    delay(500);
+    RobotStates::potTarget = 250;
+    RobotStates::is_at_pot = false;
+    RobotStates::is_pot = true;
+    delay(1000);
+
+    RobotStates::is_Collecting_Ball = false;
+    if(RobotStates::fieldColor == RobotStates::FieldColor::BLUE) {
+        Robot::turnController->generatePath({Point{0_ft, 0_ft, 0_deg}, Point{0.3_ft, 0_ft, 0_deg}}, "turn2Plat");
+    } else {
+        Robot::turnController->generatePath({Point{0_ft, 0_ft, 0_deg}, Point{0.3_ft, 0_ft, 0_deg}}, "turn2Plat");
+    }
+    // delay(200);
+
+    RobotStates::is_Shooting_Ball = true;
+    delay(500);
+
+    RobotStates::is_Shooting_Ball = false; 
+
+    // Robot::nuc->hood_Motor->setBrakeMode(okapi::AbstractMotor::brakeMode::coast);
+
+    prepareToTurn();
+    
+    if(RobotStates::fieldColor == RobotStates::FieldColor::BLUE) {
+        Robot::turnController->setTarget("turn2Plat");
+    } else {
+        Robot::turnController->setTarget("turn2Plat", true);
+    }
+    Robot::turnController->waitUntilSettled();
+    prepareToDrive();
+
+    Robot::base->setBrakeMode(AbstractMotor::brakeMode::hold);
+    Robot::base->forward(200); //200
+
+    // disable for descorer
+    Task knockPlat_task(knockPLat);
+
+    pros::delay(1300); //1500 //1200
+    Robot::base->stop();
+    
+
+    Robot::hoodController->flipDisable(true);
+    // Robot::nuc->hood_Motor->setReversed(false);
+    Robot::nuc->hoodDown();
+    delay(500);
+    Robot::nuc->hoodStop();
+    Robot::base->setBrakeMode(AbstractMotor::brakeMode::coast);
+}
+
+void back_2flag_2caps() {
+    // Robot::nuc->hood_Motor->setReversed(true);
+    //enable flywheel and collector control tasks
+    Task auto_flyWheelTask(Robot::operate_Flywheel);
+    Task auto_collectorTask(Robot::operate_BallCollector);
+    Task auto_visionTask(Robot::testTracking);
+    Task auto_alignTask(Robot::alignTheBot);
+    Task auto_movePot(Robot::hoodWithPot);
 
     Robot::profileController->removePath("B");
     Robot::profileController->removePath("short");
     Robot::turnController->removePath("90deg");
 
     RobotStates::is_Collecting_Ball = true;
-    // RobotStates::is_Flywheel_Running = true;
+    RobotStates::is_Flywheel_Running = true;
 
-    Robot::profileController->removePath("A");
-    // Robot::profileController->generatePath({Point{0_ft, 0_ft, 0_deg}, Point{3.95_ft, 0_ft, 0_deg}}, "A");
-    // Robot::profileController->setTarget("A");
-    // Robot::profileController->waitUntilSettled();
     // Robot::profileController->removePath("A");
-    Robot::mediumSpeedController->generatePath({Point{0_ft, 0_ft, 0_deg}, Point{2.75_ft, 0_ft, 0_deg}}, "A");
-    Robot::mediumSpeedController->setTarget("A");
-    Robot::mediumSpeedController->waitUntilSettled();
-    Robot::mediumSpeedController->removePath("A");
+    
+    // Robot::profileController->generatePath({Point{0_ft, 0_ft, 0_deg}, Point{2.75_ft, 0_ft, 0_deg}}, "A");
+    Robot::profileController->setTarget("A");
+    Robot::profileController->waitUntilSettled();
+    Robot::profileController->removePath("A");
 
-    // Robot::profileController->generatePath({Point{0_ft, 0_ft, 0_deg}, Point{-.45_ft, 0_ft, 0_deg}}, "back2Plat");
-    // Robot::profileController->setTarget("back2Plat", true);
-    // Robot::profileController->waitUntilSettled();
-    // Robot::profileController->removePath("back2Plat");
+    Robot::profileController->generatePath({Point{0_ft, 0_ft, 0_deg}, Point{-.45_ft, 0_ft, 0_deg}}, "back2Plat");
+    Robot::profileController->setTarget("back2Plat", true);
+    Robot::profileController->waitUntilSettled();
+    Robot::profileController->removePath("back2Plat");
+    RobotStates::is_Collecting_Ball = false;
 
-    Robot::mediumSpeedController->generatePath({Point{0_ft, 0_ft, 0_deg}, Point{-.45_ft, 0_ft, 0_deg}}, "back2Plat");
-    Robot::mediumSpeedController->setTarget("back2Plat", true);
+    prepareToTurn();
+    Robot::turnController->generatePath({Point{0_ft, 0_ft, 0_deg}, Point{0.6_ft, 0_ft, 0_deg}}, "2cap");
+    if(RobotStates::fieldColor == RobotStates::FieldColor::BLUE) {
+        Robot::turnController->setTarget("2cap", true);
+    } else {
+        Robot::turnController->setTarget("2cap");
+    }
+    Robot::turnController->waitUntilSettled();
+    Robot::turnController->removePath("2cap");
+    prepareToDrive();
+
+    Task auto_down(capDownBit);
+
+    Robot::mediumSpeedController->generatePath({Point{0_ft, 0_ft, 0_deg}, Point{.6_ft, 0_ft, 0_deg}}, "f2cap");
+    Robot::mediumSpeedController->setTarget("f2cap");
     Robot::mediumSpeedController->waitUntilSettled();
-    Robot::mediumSpeedController->removePath("back2Plat");
+    Robot::mediumSpeedController->removePath("f2cap");
+    Task auto_up(capUpBit);
 
     prepareToTurn();
     if(RobotStates::fieldColor == RobotStates::FieldColor::BLUE) {
-        //0.52
-        Robot::turnController->generatePath({Point{0_ft, 0_ft, 0_deg}, Point{0.45_ft, 0_ft, 0_deg}}, "turn2MidFlag");
+        //0.525
+        Robot::turnController->generatePath({Point{0_ft, 0_ft, 0_deg}, Point{1.2_ft, 0_ft, 0_deg}}, "turn2MidFlag");
     } else {
         Robot::turnController->generatePath({Point{0_ft, 0_ft, 0_deg}, Point{0.535_ft, 0_ft, 0_deg}}, "turn2MidFlag");
     }
@@ -840,14 +1140,15 @@ void elimBack() {
     while(!RobotStates::is_Aligned) {
         pros::delay(50);
     }
-    RobotStates::hortizontal_correction = 0.0;
 
     // Robot::nuc->hood_Motor->setBrakeMode(okapi::AbstractMotor::brakeMode::hold);
+    
+    Robot::nuc->pot->calibrate();
+    delay(500);
+    RobotStates::potTarget = 50; //100 //30 //60 //40
+    RobotStates::is_pot = true;
     delay(2000);
 
-    // RobotStates::potTarget = 20; //100 //30 //60 //40
-    // Robot::getInstance()->toggle_AssistShooting_back();
-    // delay(2000); //1500
     RobotStates::is_Collecting_Ball = false;
     RobotStates::is_Shooting_Ball = true;
     delay(100);
@@ -856,34 +1157,26 @@ void elimBack() {
     delay(200);
     RobotStates::is_Collecting_Ball = true;
 
-    // Robot::flywheelVelController->setTarget(475);
-    delay(5000);
+    Robot::nuc->hoodDown();
+    delay(200);
+    Robot::nuc->hoodStop();
+    
+    Robot::nuc->pot->calibrate();
+    delay(1000);
+    RobotStates::potTarget = 250;
+    RobotStates::is_at_pot = false;
+    RobotStates::is_pot = true;
+    delay(2000);
 
     RobotStates::is_Collecting_Ball = false;
+    delay(200);
+
     RobotStates::is_Shooting_Ball = true;
     delay(500);
 
     RobotStates::is_Shooting_Ball = false; 
-    // Robot::flywheelVelController->flipDisable(true);
-    // Robot::flywheelVelController->reset();
-    // Robot::nuc->hoodDown();
-    // delay(500);
-    // Robot::nuc->hoodStop();
-    // delay(500);
-    // Robot::nuc->pot->calibrate();
-    // delay(500);
 
-    // RobotStates::potTarget = 250; //220 //230 //250
-    // RobotStates::is_Collecting_Ball = false;
-    // Robot::getInstance()->toggle_AssistShooting_back();
-    // delay(3000);
-    
-    // RobotStates::is_Shooting_Ball = true;
-    // delay(500);
-    // RobotStates::is_Shooting_Ball = false;
-    // RobotStates::is_Collecting_Ball = true;
-
-    Robot::nuc->hood_Motor->setBrakeMode(okapi::AbstractMotor::brakeMode::coast);
+    // Robot::nuc->hood_Motor->setBrakeMode(okapi::AbstractMotor::brakeMode::coast);
 
     prepareToTurn();
     if(RobotStates::fieldColor == RobotStates::FieldColor::BLUE) {
@@ -898,10 +1191,6 @@ void elimBack() {
     }
     Robot::turnController->waitUntilSettled();
     prepareToDrive();
-
-    // RobotStates::is_Shooting_Ball = false;
-    // RobotStates::is_Collecting_Ball = true;
-    // auto_collectorTask.resume();
 
     Robot::base->setBrakeMode(AbstractMotor::brakeMode::hold);
     Robot::base->forward(200); //200
@@ -922,47 +1211,63 @@ void elimBack() {
 }
 
 void testing() {
-    Task bang(bangbang);
-    // okapi::AverageFilter<50> flywheelSpeedAvg;
-    Robot::flywheelVelController->flipDisable(true);
-    // Robot::flywheelVelController->setTarget(500.0);
-    while(true) {
-        printf("flywheel err: %f \n", Robot::nuc->flywheel_Motor->getActualVelocity());
-        // printf("flywheel output: %f \n", Robot::flywheelVelController->getOutput());
-        delay(20);
+    Task pot(Robot::hoodWithPot);
+    Task auto_visionTask(Robot::testTracking);
+    Task auto_alignTask(Robot::alignTheBot);
+
+    RobotStates::hortizontal_correction = 0; //-5
+    RobotStates::is_Aligned = false;
+    RobotStates::is_autoAligning = true;
+    
+    pros::delay(200);
+    while(!RobotStates::is_Aligned) {
+        pros::delay(50);
     }
-    // Robot::flywheelVelController->waitUntilSettled();
 
-    // Robot::collector->shootBall();
-    // delay(500);
-    // Robot::collector->stopCollector();
+    Robot::nuc->pot->calibrate();
+    delay(500);
+    RobotStates::potTarget = 50; //100 //30 //60 //40
+    RobotStates::is_pot = true;
+    delay(2000);
 
-    // Robot::flywheelVelController->flipDisable(true);
-    // Robot::flywheelVelController->reset();
+    Robot::nuc->hoodDown();
+    delay(200);
+    Robot::nuc->hoodStop();
+
+    Robot::nuc->pot->calibrate();
+    delay(500);
+
+    
+    RobotStates::potTarget = 250;
+    RobotStates::is_at_pot = false;
+    RobotStates::is_pot = true;
+    
+    delay(5000);
+    printf("pot: %d", Robot::nuc->pot->get_value_calibrated());
 }
 
 void autonomous() {
-    // switch(RobotStates::autoChoice){
-	// 	case (RobotStates::AutoChoice::FOUR_FLAGS):
-	// 		manyFlagsAuto();
-	// 		break;
-    //     case (RobotStates::AutoChoice::THREE_FLAGS_PLAT):
-	// 		threeFlags_Only_Plat();
-	// 		break;
-    //     case (RobotStates::AutoChoice::THREE_FLAGS_CAP):
-    //         threeFlags_plat();
-    //         break;
-    //     case (RobotStates::AutoChoice::BACK_TILE):
-    //         elimBack();
-    //         break;
-    //     case (RobotStates::AutoChoice::THREE_FLAGS_SKILLS):
-    //         skills();
-    //         break;
-	// 	default:
-	// 		break;
-	// }
+    switch(RobotStates::autoChoice){
+		case (RobotStates::AutoChoice::FOUR_FLAGS):
+			autoForState();
+			break;
+        case (RobotStates::AutoChoice::THREE_FLAGS_PLAT):
+			threeFlags_Only_Plat();
+			break;
+        case (RobotStates::AutoChoice::THREE_FLAGS_CAP):
+            threeFlags_twoCaps();
+            break;
+        case (RobotStates::AutoChoice::BACK_TILE):
+            elimBack();
+            break;
+        case (RobotStates::AutoChoice::THREE_FLAGS_SKILLS):
+            skills();
+            break;
+		default:
+			break;
+	}
 
-    elimBack();
+    // elimBack();
     // backTile();
     // easyBack();
     // manyFlagsAuto();

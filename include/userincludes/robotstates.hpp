@@ -24,6 +24,11 @@ class RobotStates {
         const static int BASE_LEFT_BACK = 20;
         const static int BASE_LEFT_FRONT = 11;
         const static int MAX_AUTO_CHOICE = 6; //all the options including no auto
+        const static int BLUE_FLAG_SIG = 1;
+        const static int RED_FLAG_SIG = 2;
+        const static int GREEN_SIG = 3;
+
+        static int flywheelRPM;
 
         static double targetY;
         static double targetFlag_X;

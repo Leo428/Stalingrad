@@ -26,7 +26,8 @@ class Robot {
         static void assistShooting_withVision(void * param);
         // static void assistShooting_back(void * param);
         static void testTracking(void * param);
-        static void operate_BallCollector_doubleShot(void * param);
+        static void bangbangControl(void * param);
+        static void tbhControl(void * param);
 
         static okapi::Motor * leftFront_Motor;
         static okapi::Motor * leftBack_Motor;
