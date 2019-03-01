@@ -11,7 +11,7 @@ Camera::Camera() {
     topCam = new Vision(RobotStates::CAMERA_PORT, E_VISION_ZERO_TOPLEFT);
     buttomCam->clear_led();
     topCam->clear_led();
-    buttomCam->set_exposure(60);
+    buttomCam->set_exposure(70); //60
     //1 is for blue; 2 is for red; 3 is for green
     // flagCode = buttomCam->create_color_code(3,1,0,0,0);
 }

@@ -7,7 +7,7 @@
  * Runs the operator control code. This function will be started in its own task
  * with the default priority and stack size whenever the robot is enabled via
  * the Field Management System or the VEX Competition Switch in the operator
- * control mode.
+ * control mode.will
  *
  * If no competition control is connected, this function will run immediately
  * following initialize().
@@ -50,6 +50,7 @@ void opcontrol() {
 	Robot::getInstance()->rest_before_driver();
 	RobotStates::is_Flywheel_Running = true; //TODO: enable for comp
 
+	
 	Task flywheelTask(Robot::operate_Flywheel);
 	Task visionTask(Robot::testTracking);
 	Task collectorTask(Robot::operate_BallCollector);

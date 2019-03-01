@@ -402,8 +402,10 @@ void threeFlags_twoCaps() { //3 flags, 2 caps, no plat
     //4.25 - 0 //4 //3.8
     // Robot::profileController->generatePath({Point{4_ft, 0_ft, 0_deg}, Point{0.65_ft, 0_ft, 0_deg}}, "B");
     Robot::profileController->setTarget("B", true);
-    Robot::profileController->waitUntilSettled();
+    delay(750);
     RobotStates::is_Collecting_Ball = false;
+    Robot::profileController->waitUntilSettled();
+    // RobotStates::is_Collecting_Ball = false;
     Robot::profileController->removePath("B");
     // pros::delay(200);
 
@@ -497,7 +499,8 @@ void threeFlags_twoCaps() { //3 flags, 2 caps, no plat
     Robot::turnController->generatePath({Point{0_ft, 0_ft, 0_deg}, Point{0.85_ft, 0_ft, 0_deg}}, "2cap");
     Robot::turnController->setTarget("2cap");
     Task flipGG(flipCap);
-    Robot::turnController->generatePath({Point{0_ft, 0_ft, 0_deg}, Point{0.425_ft, 0_ft, 0_deg}}, "2midFlags");
+    //0.425
+    Robot::turnController->generatePath({Point{0_ft, 0_ft, 0_deg}, Point{0.41_ft, 0_ft, 0_deg}}, "2midFlags");
     Robot::turnController->waitUntilSettled();
     Robot::turnController->removePath("2cap");
 
@@ -512,7 +515,12 @@ void threeFlags_twoCaps() { //3 flags, 2 caps, no plat
     Robot::turnController->removePath("2midFlags");
 
     Robot::base->forward(200);
-    delay(1500);
+    delay(1000);
+    Task auto_cap_down(capDownBit);
+    // delay(200); //1500
+    Robot::base->stop();
+    Robot::base->forward(-200);
+    delay(300);
     Robot::base->stop();
 }
 
@@ -964,9 +972,9 @@ void elimBack() {
 
     Robot::mediumSpeedController->generatePath({Point{0_ft, 0_ft, 0_deg}, Point{-.45_ft, 0_ft, 0_deg}}, "back2Plat");
     Robot::mediumSpeedController->setTarget("back2Plat", true);
-    RobotStates::is_Collecting_Ball = false;
     Robot::mediumSpeedController->waitUntilSettled();
     Robot::mediumSpeedController->removePath("back2Plat");
+    RobotStates::is_Collecting_Ball = false;
 
     // RobotStates::is_Collecting_Ball = true;
     prepareToTurn();
@@ -1039,6 +1047,7 @@ void elimBack() {
 
     // Robot::nuc->hood_Motor->setBrakeMode(okapi::AbstractMotor::brakeMode::coast);
 
+    
     prepareToTurn();
     
     if(RobotStates::fieldColor == RobotStates::FieldColor::BLUE) {
@@ -1046,6 +1055,7 @@ void elimBack() {
     } else {
         Robot::turnController->setTarget("turn2Plat", true);
     }
+    RobotStates::is_Collecting_Ball = true;
     Robot::turnController->waitUntilSettled();
     prepareToDrive();
 

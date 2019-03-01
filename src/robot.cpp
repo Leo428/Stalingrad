@@ -285,9 +285,8 @@ void Robot::toggle_AssistShooting_back() {
 }
 
 void Robot::assistShooting(void * param) {
-    while(true) {
+    while(!pros::competition::is_autonomous()) { //true
         if(RobotStates::is_assistant_Shooting) {
-            
             RobotStates::is_Shooting_Ball = false;
             RobotStates::is_Collecting_Ball = false;
 
@@ -346,7 +345,7 @@ void Robot::assistShooting(void * param) {
 }
 
 void Robot::assistShooting_withVision(void * param) {
-    while(true) {
+    while(pros::competition::is_autonomous()) {
         if(RobotStates::is_assistant_Shooting) {
             RobotStates::is_Shooting_Ball = false;
             RobotStates::is_Collecting_Ball = false;
